@@ -596,8 +596,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         </div>
         
         <button onClick={onReset} className="cyber-button primary">
-          <span className="button-text">RETURN TO CRYO</span>
-          <span className="button-glitch" data-text="RETURN TO CRYO">RETURN TO CRYO</span>
+          <span className="button-text">RETURN TO CONTAINER</span>
+          <span className="button-glitch" data-text="RETURN TO CONTAINER">RETURN TO CONTAINER</span>
         </button>
         
         <div className="footer-status">
