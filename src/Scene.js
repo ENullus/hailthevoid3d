@@ -361,12 +361,15 @@ export default function Scene() {
   }), [isMobile]);
 
   useEffect(() => {
-    if (binauralAudioRef.current && performanceSettings.enableBinaural) {
-      binauralAudioRef.current.play().catch(e => {
+    const binauralAudio = binauralAudioRef.current;
+    if (binauralAudio && performanceSettings.enableBinaural) {
+      binauralAudio.play().catch(e => {
         console.warn("Binaural audio autoplay prevented.", e);
       });
     }
-    return () => { if (binauralAudioRef.current) binauralAudioRef.current.pause(); };
+    return () => { 
+      if (binauralAudio) binauralAudio.pause(); 
+    };
   }, [performanceSettings.enableBinaural]);
 
   useEffect(() => {
@@ -455,7 +458,7 @@ export default function Scene() {
     }, 500);
     
     setTimeout(() => setFragments([]), 1000);
-  }, [cubeVisible, performanceSettings]);
+  }, [cubeVisible, performanceSettings.maxFragments, performanceSettings.maxRipples]);
 
   const handleReset = useCallback(() => {
     setMenuVisible(false); 
@@ -484,7 +487,7 @@ export default function Scene() {
       });
     };
     animate();
-  }, []);
+  }, [performanceSettings.enableBinaural]);
 
   const handleMediaPlayingChange = useCallback((isPlaying) => { 
     setMediaIsPlaying(isPlaying); 
