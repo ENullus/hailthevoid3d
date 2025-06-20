@@ -140,7 +140,6 @@ function useCMSContent(sectionId) {
 }
 
 function SectionContent({ section, onReset, onMediaPlayingChange }) {
-  const [isLoading, setIsLoading] = useState(true);
   const { content: cmsContent, loading: cmsLoading, error: cmsError } = useCMSContent(section?.id);
   const videoRef = useRef(null);
 
@@ -148,12 +147,6 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     if (typeof onMediaPlayingChange === 'function') {
       onMediaPlayingChange(false);
     }
-    
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
   }, [section, onMediaPlayingChange]);
 
   const currentSectionData = section && sectionContents[section.id]
@@ -262,6 +255,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
                     frameBorder="0"
                     allowFullScreen
+                    title={item.title || 'Video content'}
                     onLoad={() => onMediaPlayingChange(false)}
                   />
                 </div>
