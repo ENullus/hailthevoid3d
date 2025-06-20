@@ -62,7 +62,7 @@ function IntroPage({ onEnter }) {
         onMouseEnter={e => Object.assign(e.currentTarget.style, buttonHoverStyle)}
         onMouseLeave={e => Object.assign(e.currentTarget.style, buttonStyle)}
       >
-        FALL INSIDE
+        LET GO OF PREDICTION
       </button>
     </div>
   );
