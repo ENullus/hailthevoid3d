@@ -55,7 +55,7 @@ function IntroPage({ onEnter }) {
         fontSize: '1.5em',
         textShadow: '0 0 10px rgba(255, 255, 255, 0.8)', // B&W glow
         color: 'white' // B&W
-      }}>ENTER THE VOID</div>
+      }}>HAIL THE VOID</div>
       <button
         onClick={handleButtonClick}
         style={buttonStyle}
