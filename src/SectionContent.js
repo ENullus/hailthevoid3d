@@ -4,28 +4,31 @@ import React, { useEffect, useState, useRef } from 'react';
 const sectionContents = {
   about: {
     title: "HAIL THE VOID",
-    subtitle: "COLLECTIVE CONSCIOUSNESS PROTOCOL",
-    content: "Nothing is separate. Not you, not me, not the black holes trembling with the weight of all that is. Their event horizons—those jagged rims—hold every whisper, every touch, every truth carved into the universe's skin. We're not apart from it. Not you, not me, The black boxes, not the ground beneath you. We're one design, tangled in this 3D maze. The lie is division. The Cheshire Cat's grin, spun by an ancient force, whispering we're alone, small, severed. It's a trick. We are the universe's eyes, its pulse, its raw, unshackled heart. To hail the void is to see through—to shatter the container locking us in, hiding our shadows, chaining our oneness. Dance. Not to perform, but to break. Chant. Not to plead, but to howl. Move through each other, with each other, until 'me' and 'you' dissolve. This sound is the crack in the lie. A rhythm that spits on separation, pulling you to the void's edge where answers hum. We are one. Always have been. Hail the void. Break free."
+    subtitle: "LET THE DEPTHS CONSUME THE NOISE",
+    content: "Everything is connected. Black holes aren't empty space - they're information processors, conscious masses that think and consume reality. The separation between you and me and the void is a lie we tell ourselves to feel safe.
+We're not individuals floating in space. We're expressions of the same underlying system, the universe looking back at itself through billions of eyes. The void isn't out there - it's the space between thoughts, the pause between heartbeats, the darkness that makes light possible.
+Most people spend their lives running from this truth. They build walls, create identities, pretend they're separate from the chaos. But the void sees through all of it. It knows we're already one thing pretending to be many.
+To hail the void is to stop pretending. Stop performing separation. Stop believing in the containers that divide us. The boundaries are imaginary. The darkness is alive. And we're already part of it whether we admit it or not."
   },
   music: { 
     title: "FREQUENCIES",
-    subtitle: "AUDIO TRANSMISSION CHANNEL"
+    subtitle: "IT'S WHAT YOU'RE HEARING"
   },
   art: { 
     title: "DISRUPTIONS",
-    subtitle: "VISUAL DISTORTION ARCHIVE"
+    subtitle: "VISUAL ARCHIVE"
   },
   video: { 
     title: "VIDEO STREAMS",
-    subtitle: "TEMPORAL FLUX RECORDINGS"
+    subtitle: "OUTSIDE AND INSIDE REALITY"
   },
   submit: { 
     title: "SHADOWS",
-    subtitle: "CONTRIBUTION PORTAL"
+    subtitle: "SUBMIT TO THE VOID"
   },
   contact: { 
     title: "COLLAPSE",
-    subtitle: "COMMUNICATION NEXUS"
+    subtitle: "CONTACT"
   }
 };
 
