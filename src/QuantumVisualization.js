@@ -27,15 +27,17 @@ const DarkMatterBlob = forwardRef(({
       clearcoat: 1.0,
       clearcoatRoughness: 0.0,
       transparent: true,
-      opacity: opacity * 0.9,
+      opacity: opacity * 0.25, // Much more translucent - reduced from 0.9 to 0.25
       emissive: new THREE.Color(0x00B7EB), // Blue emissive
-      emissiveIntensity: 0.2 // Subtle glow
+      emissiveIntensity: 0.15, // Reduced emissive intensity
+      transmission: 0.8, // Added transmission for glass-like effect
+      ior: 1.5, // Index of refraction for realistic glass
+      thickness: 0.5 // Thickness for transmission effect
     });
   }, [opacity]);
 
   useFrame((state, delta) => {
     if (!meshRef.current) return;
-
     time.current += delta;
     const t = time.current;
 
@@ -47,7 +49,7 @@ const DarkMatterBlob = forwardRef(({
       const y = original[i + 1];
       const z = original[i + 2];
 
-      const chaosFactor = Math.sin(t * 10 + x * 20 + y * 20 + z * 20) * 0.1; // Reduced for smoother motion
+      const chaosFactor = Math.sin(t * 10 + x * 20 + y * 20 + z * 20) * 0.08; // Further reduced for smoother motion
       const chaosX = Math.sin(t * 3 + y * 10) * chaosFactor;
       const chaosY = Math.cos(t * 3.5 + z * 10) * chaosFactor;
       const chaosZ = Math.sin(t * 4 + x * 10) * chaosFactor;
@@ -57,7 +59,7 @@ const DarkMatterBlob = forwardRef(({
       positions[i + 2] = z + chaosZ;
 
       if (isFlowing && flowProgress > 0) {
-        const morphIntensity = Math.sin(flowProgress * Math.PI * 4) * 0.2; // Softer morph
+        const morphIntensity = Math.sin(flowProgress * Math.PI * 4) * 0.15; // Softer morph
         positions[i] *= (1 + morphIntensity);
         positions[i + 1] *= (1 + morphIntensity);
         positions[i + 2] *= (1 + morphIntensity);
@@ -67,9 +69,9 @@ const DarkMatterBlob = forwardRef(({
     meshRef.current.geometry.attributes.position.needsUpdate = true;
     meshRef.current.geometry.computeVertexNormals();
 
-    meshRef.current.rotation.x += delta * 0.2; // Slower rotation
-    meshRef.current.rotation.y += delta * 0.3;
-    meshRef.current.rotation.z += delta * 0.1;
+    meshRef.current.rotation.x += delta * 0.15; // Even slower rotation
+    meshRef.current.rotation.y += delta * 0.25;
+    meshRef.current.rotation.z += delta * 0.08;
   });
 
   return (
