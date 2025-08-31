@@ -1,4 +1,4 @@
-// src/Scene.js - Ancient Desert Sanctuary
+// src/Scene.js - Sandy Room with Metallic Cube and Menus
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, useTexture } from '@react-three/drei';
@@ -10,41 +10,41 @@ const sections = [
   {
     id: 'music',
     name: "FREQUENCIES",
-    materialProps: { color: "#F5F5DC", metalness: 0.9, roughness: 0.1, emissive: "#FFF8DC" },
+    materialProps: { color: "#C0C0C0", metalness: 1.0, roughness: 0.1, emissive: "#D3D3D3" },
     targetPos: [4, 0, 0]
   },
   {
     id: 'art',
     name: "DISRUPTIONS",
-    materialProps: { color: "#FFFAF0", metalness: 0.9, roughness: 0.1, emissive: "#FDF5E6" },
+    materialProps: { color: "#B8B8B8", metalness: 1.0, roughness: 0.1, emissive: "#DCDCDC" },
     targetPos: [-4, 0, 0]
   },
   {
     id: 'about',
     name: "HAIL THE VOID",
-    materialProps: { color: "#FAF0E6", metalness: 0.9, roughness: 0.1, emissive: "#FFEFD5" },
+    materialProps: { color: "#D3D3D3", metalness: 1.0, roughness: 0.1, emissive: "#E5E5E5" },
     targetPos: [0, 4, 0]
   },
   {
     id: 'submit',
     name: "SHADOWS",
-    materialProps: { color: "#FDF5E6", metalness: 0.9, roughness: 0.1, emissive: "#F5F5DC" },
+    materialProps: { color: "#A9A9A9", metalness: 1.0, roughness: 0.1, emissive: "#C0C0C0" },
     targetPos: [0, -4, 0]
   },
   {
     id: 'contact',
     name: "COLLAPSE",
-    materialProps: { color: "#FAEBD7", metalness: 0.9, roughness: 0.1, emissive: "#FFFAF0" },
+    materialProps: { color: "#BEBEBE", metalness: 1.0, roughness: 0.1, emissive: "#D3D3D3" },
     targetPos: [0, 0, 4]
   },
   {
     id: 'video',
     name: "Video Streams",
     materialProps: {
-      color: "#F8F8FF", 
-      metalness: 0.9,
+      color: "#E0E0E0", 
+      metalness: 1.0,
       roughness: 0.05, 
-      emissive: "#FFF8DC"
+      emissive: "#F0F0F0"
     },
     targetPos: [0, 0, -4],
     disabled: false
@@ -135,79 +135,59 @@ function useAutoPreview() {
   return { showWarning, timeLeft };
 }
 
-// Ancient Stone Walls
-function SanctuaryWalls() {
-  const wallGeometry = useMemo(() => new THREE.BoxGeometry(0.5, 8, 12), []);
-  const floorGeometry = useMemo(() => new THREE.PlaneGeometry(20, 20), []);
-  
-  const stoneMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
-    color: "#8B7355",
-    metalness: 0.1,
-    roughness: 0.9,
-    normalScale: new THREE.Vector2(2, 2)
-  }), []);
-  
-  const floorMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
-    color: "#A0866B",
-    metalness: 0.05,
-    roughness: 0.95
-  }), []);
-
+// Simple Room with Windows
+function SandyRoom() {
   return (
     <group>
-      {/* Floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -4, 0]} material={floorMaterial}>
-        <primitive object={floorGeometry} />
+      {/* Sandy Floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -4, 0]}>
+        <planeGeometry args={[25, 25]} />
+        <meshPhysicalMaterial
+          color="#D2B48C"
+          metalness={0.1}
+          roughness={0.9}
+        />
       </mesh>
       
-      {/* Walls with openings for light */}
-      <mesh position={[-10, 0, 0]} material={stoneMaterial}>
-        <primitive object={wallGeometry} />
-      </mesh>
-      <mesh position={[10, 0, 0]} material={stoneMaterial}>
-        <primitive object={wallGeometry} />
+      {/* Simple Walls */}
+      <mesh position={[-12, 0, 0]}>
+        <boxGeometry args={[0.5, 8, 20]} />
+        <meshPhysicalMaterial color="#8B7355" metalness={0.2} roughness={0.8} />
       </mesh>
       
-      {/* Back wall with opening */}
-      <mesh position={[0, 0, -6]} rotation={[0, Math.PI / 2, 0]} material={stoneMaterial}>
-        <boxGeometry args={[8, 8, 0.5]} />
+      <mesh position={[12, 0, 0]}>
+        <boxGeometry args={[0.5, 8, 20]} />
+        <meshPhysicalMaterial color="#8B7355" metalness={0.2} roughness={0.8} />
       </mesh>
       
-      {/* Partial front walls creating openings */}
-      <mesh position={[-3, 0, 6]} rotation={[0, Math.PI / 2, 0]} material={stoneMaterial}>
-        <boxGeometry args={[4, 8, 0.5]} />
-      </mesh>
-      <mesh position={[3, 0, 6]} rotation={[0, Math.PI / 2, 0]} material={stoneMaterial}>
-        <boxGeometry args={[4, 8, 0.5]} />
+      <mesh position={[0, 0, -10]}>
+        <boxGeometry args={[24, 8, 0.5]} />
+        <meshPhysicalMaterial color="#8B7355" metalness={0.2} roughness={0.8} />
       </mesh>
       
-      {/* Ceiling with openings */}
-      <mesh position={[-4, 4, 0]} rotation={[0, 0, Math.PI / 2]} material={stoneMaterial}>
-        <boxGeometry args={[0.5, 8, 12]} />
-      </mesh>
-      <mesh position={[4, 4, 0]} rotation={[0, 0, Math.PI / 2]} material={stoneMaterial}>
-        <boxGeometry args={[0.5, 8, 12]} />
+      {/* Ceiling */}
+      <mesh position={[0, 4, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[24, 20]} />
+        <meshPhysicalMaterial color="#A0856B" metalness={0.2} roughness={0.8} />
       </mesh>
     </group>
   );
 }
 
-// Volumetric Light Beams
-function VolumetricLightBeam({ position, direction, intensity }) {
+// Simple Light Beams through Windows
+function WindowLightBeam({ position, rotation, intensity }) {
   const meshRef = useRef();
-  const time = useRef(0);
   
-  useFrame((state, delta) => {
-    time.current += delta;
+  useFrame((state) => {
     if (meshRef.current) {
-      // Subtle movement to simulate atmospheric changes
-      meshRef.current.material.opacity = intensity * (0.8 + Math.sin(time.current * 0.5) * 0.2);
+      // Subtle animation
+      meshRef.current.material.opacity = intensity * (0.8 + Math.sin(state.clock.elapsedTime * 0.5) * 0.2);
     }
   });
 
   return (
-    <mesh ref={meshRef} position={position} rotation={direction}>
-      <coneGeometry args={[2, 8, 8, 1, true]} />
+    <mesh ref={meshRef} position={position} rotation={rotation}>
+      <coneGeometry args={[3, 12, 8, 1, true]} />
       <meshBasicMaterial
         color="#FFF8DC"
         transparent={true}
@@ -219,8 +199,8 @@ function VolumetricLightBeam({ position, direction, intensity }) {
   );
 }
 
-// Floating Dust Particles
-function DustParticles({ count = 50 }) {
+// Floating Dust in Light
+function DustMotes({ count = 30 }) {
   const pointsRef = useRef();
   const velocities = useRef([]);
   
@@ -230,13 +210,13 @@ function DustParticles({ count = 50 }) {
     
     for (let i = 0; i < count; i++) {
       pos[i * 3] = (Math.random() - 0.5) * 15;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 8;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 12;
+      pos[i * 3 + 1] = Math.random() * 6 - 2;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 15;
       
       velocities.current.push({
-        x: (Math.random() - 0.5) * 0.01,
-        y: Math.random() * 0.005,
-        z: (Math.random() - 0.5) * 0.01
+        x: (Math.random() - 0.5) * 0.003,
+        y: Math.random() * 0.001,
+        z: (Math.random() - 0.5) * 0.003
       });
     }
     
@@ -253,13 +233,13 @@ function DustParticles({ count = 50 }) {
         positions[i * 3 + 1] += vel.y;
         positions[i * 3 + 2] += vel.z;
         
-        // Boundary checks - keep particles in sanctuary
+        // Reset if out of bounds
         if (positions[i * 3] > 8) positions[i * 3] = -8;
         if (positions[i * 3] < -8) positions[i * 3] = 8;
-        if (positions[i * 3 + 1] > 4) positions[i * 3 + 1] = -4;
-        if (positions[i * 3 + 1] < -4) positions[i * 3 + 1] = 4;
-        if (positions[i * 3 + 2] > 6) positions[i * 3 + 2] = -6;
-        if (positions[i * 3 + 2] < -6) positions[i * 3 + 2] = 6;
+        if (positions[i * 3 + 1] > 4) positions[i * 3 + 1] = -2;
+        if (positions[i * 3 + 1] < -2) positions[i * 3 + 1] = 4;
+        if (positions[i * 3 + 2] > 8) positions[i * 3 + 2] = -8;
+        if (positions[i * 3 + 2] < -8) positions[i * 3 + 2] = 8;
       }
       
       pointsRef.current.geometry.attributes.position.needsUpdate = true;
@@ -272,47 +252,17 @@ function DustParticles({ count = 50 }) {
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.02}
+        size={0.015}
         color="#FFF8DC"
         transparent={true}
-        opacity={0.6}
+        opacity={0.7}
         blending={THREE.AdditiveBlending}
       />
     </points>
   );
 }
 
-// Sacred Geometry Patterns
-function SacredGeometry({ position, scale, opacity }) {
-  const meshRef = useRef();
-  const time = useRef(0);
-
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      time.current += delta;
-      const t = time.current;
-      
-      meshRef.current.scale.setScalar(scale * (1 + Math.sin(t * 1.5) * 0.1));
-      meshRef.current.rotation.z = t * 0.3;
-      meshRef.current.material.opacity = opacity * (0.8 + Math.sin(t * 2) * 0.2);
-    }
-  });
-
-  return (
-    <mesh ref={meshRef} position={position}>
-      <ringGeometry args={[1.5, 2, 6]} />
-      <meshBasicMaterial
-        color="#FFF8DC"
-        transparent={true}
-        opacity={opacity}
-        side={THREE.DoubleSide}
-        blending={THREE.AdditiveBlending}
-      />
-    </mesh>
-  );
-}
-
-// Energy Orb Trail Component
+// Energy Orb Trail Component (keeping your existing effects)
 function EnergyOrbTrail({ position, opacity, scale, delay }) {
   const meshRef = useRef();
   const time = useRef(delay);
@@ -336,20 +286,20 @@ function EnergyOrbTrail({ position, opacity, scale, delay }) {
     <mesh ref={meshRef} position={position}>
       <sphereGeometry args={[0.3, 16, 16]} />
       <meshPhysicalMaterial
-        color="#FFF8DC"
-        metalness={0.6}
-        roughness={0.3}
+        color="#C0C0C0"
+        metalness={0.9}
+        roughness={0.2}
         transparent={true}
         opacity={opacity}
-        emissive="#F0E68C"
+        emissive="#E0E0E0"
         emissiveIntensity={0.5}
       />
     </mesh>
   );
 }
 
-// Enlightened Void Ripple Effect
-function EnlightenedRipple({ origin, scale, opacity }) {
+// Void Ripple Effect (keeping but making metallic)
+function VoidRipple({ origin, scale, opacity }) {
   const meshRef = useRef();
   const time = useRef(0);
 
@@ -361,12 +311,6 @@ function EnlightenedRipple({ origin, scale, opacity }) {
       meshRef.current.scale.setScalar(scale * (1 + t * 2));
       meshRef.current.material.opacity = opacity * Math.max(0, 1 - t * 0.5);
       meshRef.current.rotation.z = t * 1.5;
-      
-      const positions = meshRef.current.geometry.attributes.position.array;
-      for (let i = 0; i < positions.length; i += 3) {
-        positions[i + 2] = Math.sin(positions[i] * 8 + t * 3) * 0.05;
-      }
-      meshRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });
 
@@ -374,7 +318,7 @@ function EnlightenedRipple({ origin, scale, opacity }) {
     <mesh ref={meshRef} position={origin}>
       <ringGeometry args={[0.5, 0.8, 64]} />
       <meshBasicMaterial 
-        color="#FFF8DC" 
+        color="#C0C0C0" 
         transparent={true} 
         opacity={opacity}
         side={THREE.DoubleSide}
@@ -384,8 +328,8 @@ function EnlightenedRipple({ origin, scale, opacity }) {
   );
 }
 
-// Energy Flow Effect
-function EnergyFlow({ startPos, endPos, progress }) {
+// Reality Tear Effect (keeping but metallic)
+function RealityTear({ startPos, endPos, progress }) {
   const meshRef = useRef();
   
   useFrame(() => {
@@ -418,7 +362,7 @@ function EnergyFlow({ startPos, endPos, progress }) {
   return (
     <line ref={meshRef}>
       <bufferGeometry />
-      <lineBasicMaterial color="#FFF8DC" linewidth={3} transparent opacity={0.8} />
+      <lineBasicMaterial color="#C0C0C0" linewidth={3} transparent opacity={0.8} />
     </line>
   );
 }
@@ -442,7 +386,7 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
         opacity: opacity,
         ior: 1.33,
         thickness: 1.0,
-        emissive: new THREE.Color(props.emissive || '#FFF8DC'),
+        emissive: new THREE.Color(props.emissive || '#E0E0E0'),
         emissiveIntensity: 0.4,
       });
     });
@@ -494,7 +438,7 @@ function Fragment({ position, velocity, scale, color }) {
   return ( 
     <mesh ref={meshRef} position={position} scale={scale}> 
       <boxGeometry args={[1,1,1]} /> 
-      <meshBasicMaterial color={color || "#FFF8DC"} /> 
+      <meshBasicMaterial color={color || "#C0C0C0"} /> 
     </mesh> 
   );
 }
@@ -527,7 +471,6 @@ export default function Scene() {
   const [binauralPaused, setBinauralPaused] = useState(false);
   const [voidRipples, setVoidRipples] = useState([]);
   const [realityTears, setRealityTears] = useState([]);
-  const [sacredGeometry, setSacredGeometry] = useState([]);
   const binauralAudioRef = useRef(null);
 
   // Performance optimizations based on device
@@ -535,8 +478,7 @@ export default function Scene() {
     maxFragments: isMobile ? 4 : 8,
     maxTrails: isMobile ? 2 : 5,
     maxRipples: isMobile ? 1 : 3,
-    maxGeometry: isMobile ? 2 : 4,
-    maxDustParticles: isMobile ? 30 : 80,
+    maxDustMotes: isMobile ? 20 : 40,
     animationSpeed: isMobile ? 0.5 : 1,
     enableBinaural: !isMobile
   }), [isMobile]);
@@ -582,7 +524,7 @@ export default function Scene() {
       }
     }
     
-    // Create fragments with off-white colors
+    // Create metallic fragments
     const frags = [];
     for (let i = 0; i < performanceSettings.maxFragments; i++) {
       frags.push({
@@ -595,7 +537,7 @@ export default function Scene() {
     }
     setFragments(frags);
     
-    // Create enlightened ripples
+    // Create void ripples
     const ripples = [];
     for (let i = 0; i < performanceSettings.maxRipples; i++) {
       ripples.push({
@@ -612,23 +554,7 @@ export default function Scene() {
     }
     setVoidRipples(ripples);
     
-    // Create sacred geometry patterns
-    const geometry = [];
-    for (let i = 0; i < performanceSettings.maxGeometry; i++) {
-      geometry.push({
-        id: Date.now() + i + 200,
-        position: [
-          (Math.random() - 0.5) * 8,
-          (Math.random() - 0.5) * 8,
-          (Math.random() - 0.5) * 8
-        ],
-        scale: 0.3 + Math.random() * 0.4,
-        opacity: 0.4 + Math.random() * 0.3
-      });
-    }
-    setSacredGeometry(geometry);
-    
-    // Create energy flows
+    // Create reality tears
     const tears = [];
     for (let i = 0; i < 2; i++) {
       tears.push({
@@ -660,7 +586,7 @@ export default function Scene() {
     }, 500);
     
     setTimeout(() => setFragments([]), 1000);
-  }, [cubeVisible, performanceSettings.maxFragments, performanceSettings.maxRipples, performanceSettings.maxGeometry]);
+  }, [cubeVisible, performanceSettings.maxFragments, performanceSettings.maxRipples]);
 
   const handleReset = useCallback(() => {
     setMenuVisible(false); 
@@ -668,7 +594,6 @@ export default function Scene() {
     setBinauralPaused(false);
     setVoidRipples([]);
     setRealityTears([]);
-    setSacredGeometry([]);
     
     if (binauralAudioRef.current && performanceSettings.enableBinaural) {
       binauralAudioRef.current.play().catch(e => console.error("Error resuming binaural audio:", e));
@@ -695,7 +620,7 @@ export default function Scene() {
     setMediaIsPlaying(isPlaying); 
   }, []);
 
-  // Update energy flows animation
+  // Update reality tears animation
   useEffect(() => {
     if (realityTears.length > 0) {
       const animate = () => {
@@ -712,12 +637,11 @@ export default function Scene() {
     }
   }, [realityTears.length]);
   
-  // Clean up effects after they complete
+  // Clean up ripples after they expand
   useEffect(() => {
     const cleanup = setTimeout(() => {
       setVoidRipples([]);
-      setSacredGeometry([]);
-    }, 5000);
+    }, 3000);
     return () => clearTimeout(cleanup);
   }, [voidRipples.length]);
 
@@ -731,64 +655,59 @@ export default function Scene() {
           left: 0, 
           width: '100vw', 
           height: '100vh', 
-          background: 'linear-gradient(to bottom, #F4E4BC 0%, #D2B48C 30%, #8B7355 100%)',
+          background: 'linear-gradient(to bottom, #F4E4BC 0%, #D2B48C 70%, #8B7355 100%)',
           touchAction: 'none'
         }}
-        gl={{ antialias: true, alpha: false }}
-        onCreated={({ gl }) => {
-          gl.setClearColor('#8B7355', 1);
-        }}
       >
-        {/* Ancient sanctuary lighting */}
-        <ambientLight intensity={0.3} color="#D2B48C" />
+        {/* Warm room lighting */}
+        <ambientLight intensity={0.4} color="#F0E68C" />
         <directionalLight 
-          position={[8, 12, 6]} 
-          intensity={2.0} 
+          position={[10, 8, 5]} 
+          intensity={1.8} 
           color="#FFFACD"
           castShadow
-          shadow-mapSize={[1024, 1024]}
         />
         <directionalLight 
-          position={[-6, 10, 4]} 
+          position={[-8, 6, 3]} 
           intensity={1.2} 
-          color="#F0E68C"
+          color="#F5DEB3"
         />
         <pointLight 
-          position={[2, 6, 3]} 
-          intensity={1.5} 
-          color="#FFFACD"
-          distance={15}
+          position={[0, 2, 8]} 
+          intensity={0.8} 
+          color="#FFF8DC"
+          distance={20}
         />
+
+        {/* Simple room geometry */}
+        <SandyRoom />
         
-        {/* Sanctuary architecture */}
-        <SanctuaryWalls />
-        
-        {/* Volumetric light beams */}
-        <VolumetricLightBeam 
-          position={[2, 4, 2]} 
-          direction={[0.3, 0, 0.2]} 
-          intensity={0.4}
-        />
-        <VolumetricLightBeam 
-          position={[-1, 5, 1]} 
-          direction={[-0.2, 0, 0.3]} 
+        {/* Window light beams */}
+        <WindowLightBeam 
+          position={[8, 1, 2]} 
+          rotation={[0, -0.5, 0]} 
           intensity={0.3}
         />
-        <VolumetricLightBeam 
-          position={[0, 6, -2]} 
-          direction={[0, 0, 0.4]} 
-          intensity={0.35}
+        <WindowLightBeam 
+          position={[-6, 2, 1]} 
+          rotation={[0, 0.4, 0]} 
+          intensity={0.25}
+        />
+        <WindowLightBeam 
+          position={[2, 3, 6]} 
+          rotation={[0.3, 0, 0]} 
+          intensity={0.2}
         />
         
-        {/* Floating dust particles in light beams */}
-        <DustParticles count={performanceSettings.maxDustParticles} />
+        {/* Floating dust motes */}
+        <DustMotes count={performanceSettings.maxDustMotes} />
 
         <MinimalCube onFaceClick={handleCubeClick} visible={cubeVisible} opacity={cubeOpacity} />
         {fragments.map(frag => <Fragment key={frag.id} {...frag} />)}
         
         {darkMatterVisible && activeSection && (
           <>
-            {/* Main energy orb */}
+            {/* Main quantum visualization */}
             <group position={[ 
               darkMatterProgress * activeSection.targetPos[0], 
               darkMatterProgress * activeSection.targetPos[1], 
@@ -821,29 +740,19 @@ export default function Scene() {
           </>
         )}
         
-        {/* Render enlightened ripples */}
+        {/* Render void ripples */}
         {voidRipples.map(ripple => (
-          <EnlightenedRipple
+          <VoidRipple
             key={ripple.id}
             origin={ripple.origin}
             scale={ripple.scale}
             opacity={ripple.opacity}
           />
         ))}
-
-        {/* Render sacred geometry */}
-        {sacredGeometry.map(geom => (
-          <SacredGeometry
-            key={geom.id}
-            position={geom.position}
-            scale={geom.scale}
-            opacity={geom.opacity}
-          />
-        ))}
         
-        {/* Render energy flows */}
+        {/* Render reality tears */}
         {realityTears.map(tear => (
-          <EnergyFlow
+          <RealityTear
             key={tear.id}
             startPos={tear.startPos}
             endPos={tear.endPos}
@@ -875,23 +784,33 @@ export default function Scene() {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          background: 'rgba(0,0,0,0.9)',
-          border: '2px solid #ff0000',
+          background: 'linear-gradient(145deg, #2C2C2C 0%, #1A1A1A 100%)',
+          border: '2px solid #C0C0C0',
+          borderRadius: '8px',
           padding: '30px',
           textAlign: 'center',
-          color: 'white',
+          color: '#E0E0E0',
           fontFamily: 'monospace',
           fontSize: '18px',
           zIndex: 10000,
-          boxShadow: '0 0 30px rgba(255,0,0,0.5)'
+          boxShadow: '0 0 30px rgba(192,192,192,0.3), inset 0 2px 4px rgba(255,255,255,0.1)'
         }}>
-          <div style={{ marginBottom: '20px', color: '#ff0000' }}>
+          <div style={{ 
+            marginBottom: '20px', 
+            color: '#C0C0C0',
+            textShadow: '0 0 10px rgba(192,192,192,0.5)'
+          }}>
             ⚠ INITIATING VOID GLIMPSE ⚠
           </div>
-          <div>
+          <div style={{ color: '#E0E0E0' }}>
             Dimensional breach in {timeLeft} seconds...
           </div>
-          <div style={{ fontSize: '14px', marginTop: '15px', color: '#888' }}>
+          <div style={{ 
+            fontSize: '14px', 
+            marginTop: '15px', 
+            color: '#A0A0A0',
+            fontStyle: 'italic'
+          }}>
             Move to cancel
           </div>
         </div>
@@ -903,12 +822,15 @@ export default function Scene() {
           position: 'fixed',
           top: 10,
           left: 10,
-          background: 'rgba(0,0,0,0.7)',
-          color: 'white',
-          padding: '5px',
+          background: 'linear-gradient(145deg, #2C2C2C 0%, #1A1A1A 100%)',
+          color: '#E0E0E0',
+          padding: '8px 12px',
           fontSize: '12px',
           fontFamily: 'monospace',
-          zIndex: 9999
+          zIndex: 9999,
+          border: '1px solid #404040',
+          borderRadius: '4px',
+          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.1)'
         }}>
           Device: {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | Touch: {isTouch ? 'Yes' : 'No'}
         </div>
