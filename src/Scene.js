@@ -1,4 +1,3 @@
-// src/Scene.js - Clean Metallic Version
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, useTexture } from '@react-three/drei';
@@ -41,9 +40,9 @@ const sections = [
     id: 'video',
     name: "Video Streams",
     materialProps: {
-      color: "#E0E0E0", 
+      color: "#E0E0E0",
       metalness: 1.0,
-      roughness: 0.05, 
+      roughness: 0.05,
       emissive: "#F5F5F5"
     },
     targetPos: [0, 0, -4],
@@ -54,7 +53,7 @@ const sections = [
 // Device detection hook
 function useDeviceDetection() {
   const [device, setDevice] = useState({ isMobile: false, isTablet: false, isTouch: false });
-  
+
   useEffect(() => {
     const checkDevice = () => {
       const width = window.innerWidth;
@@ -62,20 +61,20 @@ function useDeviceDetection() {
       const isTouch = 'ontouchstart' in window;
       const isMobile = width <= 768 || (isTouch && Math.min(width, height) <= 768);
       const isTablet = !isMobile && width <= 1024 && isTouch;
-      
+
       setDevice({ isMobile, isTablet, isTouch });
     };
-    
+
     checkDevice();
     window.addEventListener('resize', checkDevice);
     window.addEventListener('orientationchange', checkDevice);
-    
+
     return () => {
       window.removeEventListener('resize', checkDevice);
       window.removeEventListener('orientationchange', checkDevice);
     };
   }, []);
-  
+
   return device;
 }
 
@@ -86,24 +85,24 @@ function useAutoPreview() {
   const timerRef = useRef(null);
   const warningTimerRef = useRef(null);
   const countdownRef = useRef(null);
-  
+
   useEffect(() => {
     const previewHappened = sessionStorage.getItem('voidPreviewShown');
     if (previewHappened) return;
-    
+
     const TOTAL_TIME = 2 * 60 * 1000;
     const WARNING_TIME = 10 * 1000;
     const PREVIEW_DURATION = 30;
-    
+
     const STATIC_SITE_URL = 'https://hailthevoid.org';
-    
+
     function schedulePreview() {
       warningTimerRef.current = setTimeout(() => {
         setShowWarning(true);
         setTimeLeft(10);
         startCountdown();
       }, TOTAL_TIME - WARNING_TIME);
-      
+
       timerRef.current = setTimeout(() => {
         sessionStorage.setItem('voidPreviewShown', 'true');
         const currentUrl = window.location.href.split('?')[0];
@@ -111,7 +110,7 @@ function useAutoPreview() {
         window.location.href = previewUrl;
       }, TOTAL_TIME);
     }
-    
+
     function startCountdown() {
       countdownRef.current = setInterval(() => {
         setTimeLeft(prev => {
@@ -123,16 +122,16 @@ function useAutoPreview() {
         });
       }, 1000);
     }
-    
+
     schedulePreview();
-    
+
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, []);
-  
+
   return { showWarning, timeLeft };
 }
 
@@ -145,11 +144,11 @@ function MetallicTrail({ position, opacity, scale, delay }) {
     if (meshRef.current) {
       time.current += delta;
       const t = time.current;
-      
+
       meshRef.current.position.x = position[0] + Math.sin(t * 0.5) * 0.5;
       meshRef.current.position.y = position[1] + Math.cos(t * 0.7) * 0.3;
       meshRef.current.position.z = position[2] + Math.sin(t * 0.3) * 0.4;
-      
+
       const pulseScale = scale * (1 + Math.sin(t * 2) * 0.2);
       meshRef.current.scale.setScalar(pulseScale);
       meshRef.current.material.opacity = opacity * (0.5 + Math.sin(t) * 0.5);
@@ -181,11 +180,11 @@ function MetallicRipple({ origin, scale, opacity }) {
     if (meshRef.current) {
       time.current += delta;
       const t = time.current;
-      
+
       meshRef.current.scale.setScalar(scale * (1 + t * 3));
       meshRef.current.material.opacity = opacity * Math.max(0, 1 - t);
       meshRef.current.rotation.z = t * 2;
-      
+
       const positions = meshRef.current.geometry.attributes.position.array;
       for (let i = 0; i < positions.length; i += 3) {
         positions[i + 2] = Math.sin(positions[i] * 10 + t * 5) * 0.1;
@@ -197,9 +196,9 @@ function MetallicRipple({ origin, scale, opacity }) {
   return (
     <mesh ref={meshRef} position={origin}>
       <ringGeometry args={[0.5, 0.8, 64]} />
-      <meshBasicMaterial 
-        color="#C0C0C0" 
-        transparent={true} 
+      <meshBasicMaterial
+        color="#C0C0C0"
+        transparent={true}
         opacity={opacity}
         side={THREE.DoubleSide}
         blending={THREE.AdditiveBlending}
@@ -211,7 +210,7 @@ function MetallicRipple({ origin, scale, opacity }) {
 // Metallic Reality Tear Effect
 function MetallicTear({ startPos, endPos, progress }) {
   const meshRef = useRef();
-  
+
   useFrame(() => {
     if (meshRef.current && progress < 1) {
       const curve = new THREE.QuadraticBezierCurve3(
@@ -223,10 +222,10 @@ function MetallicTear({ startPos, endPos, progress }) {
         ),
         new THREE.Vector3(...endPos)
       );
-      
+
       const points = curve.getPoints(50);
       const positions = new Float32Array(points.length * 3);
-      
+
       points.forEach((point, i) => {
         if (i / points.length < progress) {
           positions[i * 3] = point.x + (Math.random() - 0.5) * 0.1;
@@ -234,11 +233,11 @@ function MetallicTear({ startPos, endPos, progress }) {
           positions[i * 3 + 2] = point.z + (Math.random() - 0.5) * 0.1;
         }
       });
-      
+
       meshRef.current.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     }
   });
-  
+
   return (
     <line ref={meshRef}>
       <bufferGeometry />
@@ -262,14 +261,14 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
         roughnessMap: iceRoughnessMap,
         normalScale: new THREE.Vector2(1, 1),
         transparent: true,
-        transmission: 0.7,
+        transmission: 0.5, // Reduced for a more solid metallic look
         opacity: opacity,
         ior: 1.5,
-        thickness: 1.0,
-        emissive: new THREE.Color(props.emissive || '#E0E0E0'),
-        emissiveIntensity: 0.2,
+        thickness: 0.8, // Adjusted for consistency with metallic theme
+        emissive: new THREE.Color(props.emissive),
+        emissiveIntensity: 0.4, // Increased for a stronger glow
         clearcoat: 1.0,
-        clearcoatRoughness: 0.1
+        clearcoatRoughness: 0.05 // Smoother clearcoat for a polished look
       });
     });
   }, [opacity, iceNormalMap, iceRoughnessMap]);
@@ -286,7 +285,11 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
       }
     }
   };
-  return ( <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0,0,0]} visible={visible}> <boxGeometry args={[2,2,2]} /> </mesh> );
+  return (
+    <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0, 0, 0]} visible={visible}>
+      <boxGeometry args={[2, 2, 2]} />
+    </mesh>
+  );
 }
 
 function Fragment({ position, velocity, scale, color }) {
@@ -302,15 +305,20 @@ function Fragment({ position, velocity, scale, color }) {
       meshRef.current.scale.multiplyScalar(0.98);
     }
   });
-  return ( <mesh ref={meshRef} position={position} scale={scale}> <boxGeometry args={[1,1,1]} /> <meshBasicMaterial color={color || "#C0C0C0"} /> </mesh> );
+  return (
+    <mesh ref={meshRef} position={position} scale={scale}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshBasicMaterial color={color || "#C0C0C0"} />
+    </mesh>
+  );
 }
 
 function CameraController({ darkMatterProgress, targetPos }) {
   const { camera } = useThree();
   useFrame(() => {
     if (darkMatterProgress > 0 && targetPos) {
-      const currentPos = new THREE.Vector3().lerpVectors(new THREE.Vector3(0,0,0), new THREE.Vector3(...targetPos), darkMatterProgress);
-      const cameraPos = currentPos.clone().add(new THREE.Vector3(3,3,3));
+      const currentPos = new THREE.Vector3().lerpVectors(new THREE.Vector3(0, 0, 0), new THREE.Vector3(...targetPos), darkMatterProgress);
+      const cameraPos = currentPos.clone().add(new THREE.Vector3(3, 3, 3));
       camera.position.lerp(cameraPos, 0.07);
       camera.lookAt(currentPos);
     }
@@ -321,7 +329,7 @@ function CameraController({ darkMatterProgress, targetPos }) {
 export default function Scene() {
   const { isMobile, isTablet, isTouch } = useDeviceDetection();
   const { showWarning, timeLeft } = useAutoPreview();
-  
+
   const [cubeVisible, setCubeVisible] = useState(true);
   const [cubeOpacity, setCubeOpacity] = useState(1);
   const [fragments, setFragments] = useState([]);
@@ -335,7 +343,6 @@ export default function Scene() {
   const [realityTears, setRealityTears] = useState([]);
   const binauralAudioRef = useRef(null);
 
-  // Performance optimizations based on device
   const performanceSettings = useMemo(() => ({
     maxFragments: isMobile ? 4 : 8,
     maxTrails: isMobile ? 2 : 5,
@@ -344,7 +351,6 @@ export default function Scene() {
     enableBinaural: !isMobile
   }), [isMobile]);
 
-  // Camera settings based on device
   const cameraSettings = useMemo(() => ({
     position: isMobile ? [3, 3, 3] : [5, 5, 5],
     fov: isMobile ? 60 : 50
@@ -357,8 +363,8 @@ export default function Scene() {
         console.warn("Binaural audio autoplay prevented.", e);
       });
     }
-    return () => { 
-      if (binauralAudio) binauralAudio.pause(); 
+    return () => {
+      if (binauralAudio) binauralAudio.pause();
     };
   }, [performanceSettings.enableBinaural]);
 
@@ -377,28 +383,26 @@ export default function Scene() {
   const handleCubeClick = useCallback((section) => {
     if (!cubeVisible || section.disabled) return;
     setCubeOpacity(0);
-    
+
     if (section.id === 'video' || section.id === 'music') {
       setBinauralPaused(true);
       if (binauralAudioRef.current) {
         binauralAudioRef.current.pause();
       }
     }
-    
-    // Create metallic fragments
+
     const frags = [];
     for (let i = 0; i < performanceSettings.maxFragments; i++) {
       frags.push({
         id: i,
-        position: [ (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5 ],
-        velocity: [ (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5 ],
+        position: [(Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5],
+        velocity: [(Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5],
         scale: 0.2 + Math.random() * 0.3,
         color: section.materialProps.color
       });
     }
     setFragments(frags);
-    
-    // Create metallic void ripples
+
     const ripples = [];
     for (let i = 0; i < performanceSettings.maxRipples; i++) {
       ripples.push({
@@ -414,8 +418,7 @@ export default function Scene() {
       });
     }
     setVoidRipples(ripples);
-    
-    // Create metallic reality tears
+
     const tears = [];
     for (let i = 0; i < 2; i++) {
       tears.push({
@@ -426,62 +429,61 @@ export default function Scene() {
       });
     }
     setRealityTears(tears);
-    
+
     setTimeout(() => {
-      setCubeVisible(false); 
-      setDarkMatterVisible(true); 
+      setCubeVisible(false);
+      setDarkMatterVisible(true);
       setActiveSection(section);
-      
+
       const animate = () => {
         setDarkMatterProgress(prev => {
           const next = prev + 0.01;
-          if (next >= 1) { 
-            setTimeout(() => setMenuVisible(true), 800); 
-            return 1; 
+          if (next >= 1) {
+            setTimeout(() => setMenuVisible(true), 800);
+            return 1;
           }
-          requestAnimationFrame(animate); 
+          requestAnimationFrame(animate);
           return next;
         });
       };
       animate();
     }, 500);
-    
+
     setTimeout(() => setFragments([]), 1000);
   }, [cubeVisible, performanceSettings.maxFragments, performanceSettings.maxRipples]);
 
   const handleReset = useCallback(() => {
-    setMenuVisible(false); 
+    setMenuVisible(false);
     setMediaIsPlaying(false);
     setBinauralPaused(false);
     setVoidRipples([]);
     setRealityTears([]);
-    
+
     if (binauralAudioRef.current && performanceSettings.enableBinaural) {
       binauralAudioRef.current.play().catch(e => console.error("Error resuming binaural audio:", e));
     }
-    
+
     const animate = () => {
       setDarkMatterProgress(prev => {
         const next = prev - 0.015;
         if (next <= 0) {
-          setDarkMatterVisible(false); 
-          setCubeVisible(true); 
-          setActiveSection(null); 
-          setCubeOpacity(1); 
+          setDarkMatterVisible(false);
+          setCubeVisible(true);
+          setActiveSection(null);
+          setCubeOpacity(1);
           return 0;
         }
-        requestAnimationFrame(animate); 
+        requestAnimationFrame(animate);
         return next;
       });
     };
     animate();
   }, [performanceSettings.enableBinaural]);
 
-  const handleMediaPlayingChange = useCallback((isPlaying) => { 
-    setMediaIsPlaying(isPlaying); 
+  const handleMediaPlayingChange = useCallback((isPlaying) => {
+    setMediaIsPlaying(isPlaying);
   }, []);
 
-  // Update reality tears animation
   useEffect(() => {
     if (realityTears.length > 0) {
       const animate = () => {
@@ -489,7 +491,7 @@ export default function Scene() {
           ...tear,
           progress: Math.min(tear.progress + 0.03, 1)
         })).filter(tear => tear.progress < 1));
-        
+
         if (realityTears.length > 0) {
           requestAnimationFrame(animate);
         }
@@ -497,8 +499,7 @@ export default function Scene() {
       requestAnimationFrame(animate);
     }
   }, [realityTears.length]);
-  
-  // Clean up ripples after they expand
+
   useEffect(() => {
     const cleanup = setTimeout(() => {
       setVoidRipples([]);
@@ -508,15 +509,15 @@ export default function Scene() {
 
   return (
     <>
-      <Canvas 
-        camera={{ position: cameraSettings.position, fov: cameraSettings.fov }} 
-        style={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          width: '100vw', 
-          height: '100vh', 
-          background: 'linear-gradient(to bottom, #F5DEB3 0%, #D2B48C 100%)',
+      <Canvas
+        camera={{ position: cameraSettings.position, fov: cameraSettings.fov }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)', // Matched to SectionContent.js
           touchAction: 'none'
         }}
       >
@@ -526,24 +527,24 @@ export default function Scene() {
 
         <MinimalCube onFaceClick={handleCubeClick} visible={cubeVisible} opacity={cubeOpacity} />
         {fragments.map(frag => <Fragment key={frag.id} {...frag} />)}
-        
+
         {darkMatterVisible && activeSection && (
           <>
-            <group position={[ 
-              darkMatterProgress * activeSection.targetPos[0], 
-              darkMatterProgress * activeSection.targetPos[1], 
-              darkMatterProgress * activeSection.targetPos[2] 
+            <group position={[
+              darkMatterProgress * activeSection.targetPos[0],
+              darkMatterProgress * activeSection.targetPos[1],
+              darkMatterProgress * activeSection.targetPos[2]
             ]}>
               <QuantumVisualization
-                position={[0,0,0]} 
-                scale={1.2 - darkMatterProgress * 0.4} 
+                position={[0, 0, 0]}
+                scale={1.2 - darkMatterProgress * 0.4}
                 opacity={1}
                 flowDirection={new THREE.Vector3(...activeSection.targetPos).normalize()}
-                isFlowing={true} 
+                isFlowing={true}
                 flowProgress={darkMatterProgress}
               />
             </group>
-            
+
             {[...Array(performanceSettings.maxTrails)].map((_, i) => (
               <MetallicTrail
                 key={i}
@@ -559,7 +560,7 @@ export default function Scene() {
             ))}
           </>
         )}
-        
+
         {voidRipples.map(ripple => (
           <MetallicRipple
             key={ripple.id}
@@ -568,7 +569,7 @@ export default function Scene() {
             opacity={ripple.opacity}
           />
         ))}
-        
+
         {realityTears.map(tear => (
           <MetallicTear
             key={tear.id}
@@ -577,10 +578,10 @@ export default function Scene() {
             progress={tear.progress}
           />
         ))}
-        
+
         {darkMatterVisible && activeSection && <CameraController darkMatterProgress={darkMatterProgress} targetPos={activeSection.targetPos} />}
-        <OrbitControls 
-          enablePan={false} 
+        <OrbitControls
+          enablePan={false}
           enabled={!darkMatterVisible}
           enableDamping={true}
           dampingFactor={0.05}
@@ -588,74 +589,73 @@ export default function Scene() {
           minDistance={isMobile ? 2 : 3}
         />
       </Canvas>
-      
+
       <SectionContent section={menuVisible ? activeSection : null} onReset={handleReset} onMediaPlayingChange={handleMediaPlayingChange} />
-      
+
       {performanceSettings.enableBinaural && (
         <audio ref={binauralAudioRef} loop preload="auto" src="/audio/binaural_loop.mp3" />
       )}
-      
+
       {showWarning && (
         <div style={{
           position: 'fixed',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #C0C0C0 50%, #A8A8A8 100%)',
-          border: '3px solid #808080',
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          border: '4px solid #808080',
           borderRadius: '12px',
           padding: '35px',
           textAlign: 'center',
-          color: '#000000',
+          color: '#1A1A1A',
           fontFamily: 'monospace',
           fontSize: '18px',
           fontWeight: 'bold',
           zIndex: 10000,
-          boxShadow: '0 0 40px rgba(0,0,0,0.3), inset 0 2px 8px rgba(255,255,255,0.4), inset 0 -2px 8px rgba(0,0,0,0.2)',
-          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.3)'
+          boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)'
         }}>
-          <div style={{ 
-            marginBottom: '20px', 
+          <div style={{
+            marginBottom: '20px',
             color: '#2C2C2C',
-            textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.5)',
-            letterSpacing: '2px'
+            textShadow: '0 0 5px rgba(0,0,255,0.3)'
           }}>
             ⚠ INITIATING VOID GLIMPSE ⚠
           </div>
-          <div style={{ 
+          <div style={{
             color: '#1A1A1A',
-            textShadow: '0 1px 1px rgba(255,255,255,0.6)'
+            textShadow: '0 0 5px rgba(0,0,255,0.3)'
           }}>
             Dimensional breach in {timeLeft} seconds...
           </div>
-          <div style={{ 
-            fontSize: '14px', 
-            marginTop: '15px', 
+          <div style={{
+            fontSize: '14px',
+            marginTop: '15px',
             color: '#4A4A4A',
             fontStyle: 'italic',
-            textShadow: '0 1px 1px rgba(255,255,255,0.4)'
+            textShadow: '0 0 5px rgba(0,0,255,0.3)'
           }}>
             Move to cancel
           </div>
         </div>
       )}
-      
+
       {process.env.NODE_ENV === 'development' && (
         <div style={{
           position: 'fixed',
           top: 10,
           left: 10,
-          background: 'linear-gradient(145deg, #E0E0E0 0%, #C8C8C8 50%, #B0B0B0 100%)',
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          border: '2px solid #808080',
+          borderRadius: '8px',
+          padding: '10px',
           color: '#2C2C2C',
-          padding: '8px 12px',
-          fontSize: '12px',
           fontFamily: 'monospace',
+          fontSize: '12px',
           fontWeight: 'bold',
           zIndex: 9999,
-          border: '2px solid #999999',
-          borderRadius: '6px',
-          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -1px 2px rgba(0,0,0,0.2)',
-          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
+          boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)'
         }}>
           Device: {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | Touch: {isTouch ? 'Yes' : 'No'}
         </div>
