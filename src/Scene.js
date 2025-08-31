@@ -1,59 +1,10 @@
 // src/Scene.js - Ancient Desert Sanctuary
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { Canvas, useThree, useFrame, extend } from '@react-three/fiber';
-import { OrbitControls, useTexture, Plane } from '@react-three/drei';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { OrbitControls, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import SectionContent from './SectionContent';
 import QuantumVisualization from './QuantumVisualization';
-
-// Volumetric Light Shader
-const VolumetricLightShader = {
-  uniforms: {
-    tDiffuse: { value: null },
-    lightPosition: { value: new THREE.Vector2(0.5, 0.5) },
-    exposure: { value: 0.25 },
-    decay: { value: 0.95 },
-    density: { value: 0.8 },
-    weight: { value: 0.4 },
-    samples: { value: 50 }
-  },
-  vertexShader: `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    varying vec2 vUv;
-    uniform sampler2D tDiffuse;
-    uniform vec2 lightPosition;
-    uniform float exposure;
-    uniform float decay;
-    uniform float density;
-    uniform float weight;
-    uniform int samples;
-    
-    void main() {
-      vec2 texCoord = vUv;
-      vec2 deltaTextCoord = texCoord - lightPosition;
-      deltaTextCoord *= 1.0 / float(samples) * density;
-      vec4 color = texture2D(tDiffuse, texCoord);
-      float illuminationDecay = 1.0;
-      
-      for(int i = 0; i < 50; i++) {
-        if(i >= samples) break;
-        texCoord -= deltaTextCoord;
-        vec4 sample = texture2D(tDiffuse, texCoord);
-        sample *= illuminationDecay * weight;
-        color += sample;
-        illuminationDecay *= decay;
-      }
-      
-      gl_FragColor = color * exposure;
-    }
-  `
-};
 
 const sections = [
   {
@@ -186,8 +137,6 @@ function useAutoPreview() {
 
 // Ancient Stone Walls
 function SanctuaryWalls() {
-  const wallRefs = useRef([]);
-  
   const wallGeometry = useMemo(() => new THREE.BoxGeometry(0.5, 8, 12), []);
   const floorGeometry = useMemo(() => new THREE.PlaneGeometry(20, 20), []);
   
