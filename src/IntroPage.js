@@ -1,5 +1,4 @@
-// src/IntroPage.js
-import React from 'react';
+import React, { useEffect } from 'react';
 
 function IntroPage({ onEnter }) {
   const introContainerStyle = {
@@ -16,45 +15,55 @@ function IntroPage({ onEnter }) {
     color: 'white',
     fontFamily: '"Orbitron", monospace',
     fontSize: '3em',
-    textShadow: '0 0 15px rgba(255, 255, 255, 0.7)', // White glow
+    textShadow: '0 0 15px rgba(255, 255, 255, 0.7)',
     zIndex: 999,
-    opacity: 1,
+    opacity: 0,
     transition: 'opacity 1s ease-out',
   };
 
   const buttonStyle = {
     marginTop: '50px',
     padding: '15px 40px',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // B&W
-    color: 'white',                     // B&W
-    border: '2px solid white',          // B&W
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: 'white',
+    border: '2px solid white',
     borderRadius: '5px',
     cursor: 'pointer',
     fontSize: '1.5em',
     fontWeight: 'bold',
     letterSpacing: '2px',
     textTransform: 'uppercase',
-    boxShadow: '0 0 20px rgba(255, 255, 255, 0.5)', // B&W glow
+    boxShadow: '0 0 20px rgba(255, 255, 255, 0.5)',
     transition: 'background-color 0.3s, box-shadow 0.3s, color 0.3s',
   };
 
   const buttonHoverStyle = {
-    backgroundColor: 'white', // B&W
-    color: 'black',           // B&W
-    boxShadow: '0 0 30px rgba(255, 255, 255, 0.8)', // B&W glow
+    backgroundColor: 'white',
+    color: 'black',
+    boxShadow: '0 0 30px rgba(255, 255, 255, 0.8)',
   };
 
+  useEffect(() => {
+    const container = document.querySelector('.intro-container');
+    if (container) {
+      container.style.opacity = 1; // Fade in on mount
+    }
+  }, []);
+
   const handleButtonClick = (event) => {
-    event.currentTarget.closest('.intro-container').style.opacity = 0;
-    setTimeout(onEnter, 1000);
+    const container = event.currentTarget.closest('.intro-container');
+    if (container) {
+      container.style.opacity = 0; // Fade out on click
+      setTimeout(onEnter, 1000); // Trigger onEnter after fade-out
+    }
   };
 
   return (
     <div className="intro-container" style={introContainerStyle}>
       <div style={{
         fontSize: '1.5em',
-        textShadow: '0 0 10px rgba(255, 255, 255, 0.8)', // B&W glow
-        color: 'white' // B&W
+        textShadow: '0 0 10px rgba(255, 255, 255, 0.8)',
+        color: 'white'
       }}>HAIL THE VOID</div>
       <button
         onClick={handleButtonClick}
