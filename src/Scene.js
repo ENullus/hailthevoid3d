@@ -1,4 +1,4 @@
-// src/Scene.js - Mobile Optimized Version
+// src/Scene.js - Sandy Holy Room Aesthetic
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, useTexture } from '@react-three/drei';
@@ -10,41 +10,41 @@ const sections = [
   {
     id: 'music',
     name: "FREQUENCIES",
-    materialProps: { color: "#1a1a1a", metalness: 0.9, roughness: 0.1, emissive: "#000000" },
+    materialProps: { color: "#8B7355", metalness: 0.9, roughness: 0.1, emissive: "#D2B48C" },
     targetPos: [4, 0, 0]
   },
   {
     id: 'art',
     name: "DISRUPTIONS",
-    materialProps: { color: "#0d0d0d", metalness: 0.9, roughness: 0.1, emissive: "#000000" },
+    materialProps: { color: "#A0856B", metalness: 0.9, roughness: 0.1, emissive: "#DEB887" },
     targetPos: [-4, 0, 0]
   },
   {
     id: 'about',
     name: "HAIL THE VOID",
-    materialProps: { color: "#262626", metalness: 0.9, roughness: 0.1, emissive: "#000000" },
+    materialProps: { color: "#9C8A73", metalness: 0.9, roughness: 0.1, emissive: "#F5DEB3" },
     targetPos: [0, 4, 0]
   },
   {
     id: 'submit',
     name: "SHADOWS",
-    materialProps: { color: "#333333", metalness: 0.9, roughness: 0.1, emissive: "#000000" },
+    materialProps: { color: "#8E7B68", metalness: 0.9, roughness: 0.1, emissive: "#D2B48C" },
     targetPos: [0, -4, 0]
   },
   {
     id: 'contact',
     name: "COLLAPSE",
-    materialProps: { color: "#1f1f1f", metalness: 0.9, roughness: 0.1, emissive: "#000000" },
+    materialProps: { color: "#967D6A", metalness: 0.9, roughness: 0.1, emissive: "#DEB887" },
     targetPos: [0, 0, 4]
   },
   {
     id: 'video',
     name: "Video Streams",
     materialProps: {
-      color: "#2C2C2C", 
+      color: "#A5926F", 
       metalness: 0.9,
       roughness: 0.05, 
-      emissive: "#000000"
+      emissive: "#F5DEB3"
     },
     targetPos: [0, 0, -4],
     disabled: false
@@ -140,8 +140,41 @@ function useAutoPreview() {
   return { showWarning, timeLeft };
 }
 
-// Dark Matter Trail Component
-function DarkMatterTrail({ position, opacity, scale, delay }) {
+// Sacred Geometry Patterns
+function SacredGeometry({ position, scale, opacity }) {
+  const meshRef = useRef();
+  const time = useRef(0);
+
+  useFrame((state, delta) => {
+    if (meshRef.current) {
+      time.current += delta;
+      const t = time.current;
+      
+      // Gentle pulsing
+      meshRef.current.scale.setScalar(scale * (1 + Math.sin(t * 1.5) * 0.1));
+      meshRef.current.rotation.z = t * 0.3;
+      
+      // Subtle opacity pulse
+      meshRef.current.material.opacity = opacity * (0.8 + Math.sin(t * 2) * 0.2);
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={position}>
+      <ringGeometry args={[1.5, 2, 6]} />
+      <meshBasicMaterial
+        color="#F5DEB3"
+        transparent={true}
+        opacity={opacity}
+        side={THREE.DoubleSide}
+        blending={THREE.AdditiveBlending}
+      />
+    </mesh>
+  );
+}
+
+// Energy Orb Trail Component
+function EnergyOrbTrail({ position, opacity, scale, delay }) {
   const meshRef = useRef();
   const time = useRef(delay);
 
@@ -160,7 +193,7 @@ function DarkMatterTrail({ position, opacity, scale, delay }) {
       meshRef.current.scale.setScalar(pulseScale);
       
       // Fade based on distance
-      meshRef.current.material.opacity = opacity * (0.5 + Math.sin(t) * 0.5);
+      meshRef.current.material.opacity = opacity * (0.7 + Math.sin(t) * 0.3);
     }
   });
 
@@ -168,20 +201,20 @@ function DarkMatterTrail({ position, opacity, scale, delay }) {
     <mesh ref={meshRef} position={position}>
       <sphereGeometry args={[0.3, 16, 16]} />
       <meshPhysicalMaterial
-        color="#444444"
-        metalness={0.8}
-        roughness={0.2}
+        color="#F5DEB3"
+        metalness={0.6}
+        roughness={0.3}
         transparent={true}
         opacity={opacity}
-        emissive="#666666"
-        emissiveIntensity={0.3}
+        emissive="#DEB887"
+        emissiveIntensity={0.5}
       />
     </mesh>
   );
 }
 
-// Abstract Void Ripple Effect
-function VoidRipple({ origin, scale, opacity }) {
+// Enlightened Void Ripple Effect
+function EnlightenedRipple({ origin, scale, opacity }) {
   const meshRef = useRef();
   const time = useRef(0);
 
@@ -191,16 +224,16 @@ function VoidRipple({ origin, scale, opacity }) {
       const t = time.current;
       
       // Expand outward
-      meshRef.current.scale.setScalar(scale * (1 + t * 3));
+      meshRef.current.scale.setScalar(scale * (1 + t * 2));
       
-      // Fade and distort
-      meshRef.current.material.opacity = opacity * Math.max(0, 1 - t);
-      meshRef.current.rotation.z = t * 2;
+      // Fade gracefully
+      meshRef.current.material.opacity = opacity * Math.max(0, 1 - t * 0.5);
+      meshRef.current.rotation.z = t * 1.5;
       
-      // Warping effect
+      // Gentle warping effect
       const positions = meshRef.current.geometry.attributes.position.array;
       for (let i = 0; i < positions.length; i += 3) {
-        positions[i + 2] = Math.sin(positions[i] * 10 + t * 5) * 0.1;
+        positions[i + 2] = Math.sin(positions[i] * 8 + t * 3) * 0.05;
       }
       meshRef.current.geometry.attributes.position.needsUpdate = true;
     }
@@ -210,7 +243,7 @@ function VoidRipple({ origin, scale, opacity }) {
     <mesh ref={meshRef} position={origin}>
       <ringGeometry args={[0.5, 0.8, 64]} />
       <meshBasicMaterial 
-        color="#000000" 
+        color="#F5DEB3" 
         transparent={true} 
         opacity={opacity}
         side={THREE.DoubleSide}
@@ -220,8 +253,8 @@ function VoidRipple({ origin, scale, opacity }) {
   );
 }
 
-// Reality Tear Effect - like space is ripping
-function RealityTear({ startPos, endPos, progress }) {
+// Energy Flow Effect - like sacred energy streams
+function EnergyFlow({ startPos, endPos, progress }) {
   const meshRef = useRef();
   
   useFrame(() => {
@@ -229,9 +262,9 @@ function RealityTear({ startPos, endPos, progress }) {
       const curve = new THREE.QuadraticBezierCurve3(
         new THREE.Vector3(...startPos),
         new THREE.Vector3(
-          (startPos[0] + endPos[0]) / 2 + (Math.random() - 0.5) * 2,
-          (startPos[1] + endPos[1]) / 2 + (Math.random() - 0.5) * 2,
-          (startPos[2] + endPos[2]) / 2 + (Math.random() - 0.5) * 2
+          (startPos[0] + endPos[0]) / 2 + (Math.random() - 0.5) * 1,
+          (startPos[1] + endPos[1]) / 2 + (Math.random() - 0.5) * 1,
+          (startPos[2] + endPos[2]) / 2 + (Math.random() - 0.5) * 1
         ),
         new THREE.Vector3(...endPos)
       );
@@ -241,9 +274,9 @@ function RealityTear({ startPos, endPos, progress }) {
       
       points.forEach((point, i) => {
         if (i / points.length < progress) {
-          positions[i * 3] = point.x + (Math.random() - 0.5) * 0.1;
-          positions[i * 3 + 1] = point.y + (Math.random() - 0.5) * 0.1;
-          positions[i * 3 + 2] = point.z + (Math.random() - 0.5) * 0.1;
+          positions[i * 3] = point.x + (Math.random() - 0.5) * 0.05;
+          positions[i * 3 + 1] = point.y + (Math.random() - 0.5) * 0.05;
+          positions[i * 3 + 2] = point.z + (Math.random() - 0.5) * 0.05;
         }
       });
       
@@ -254,7 +287,7 @@ function RealityTear({ startPos, endPos, progress }) {
   return (
     <line ref={meshRef}>
       <bufferGeometry />
-      <lineBasicMaterial color="#000000" linewidth={3} transparent opacity={0.8} />
+      <lineBasicMaterial color="#F5DEB3" linewidth={3} transparent opacity={0.8} />
     </line>
   );
 }
@@ -278,8 +311,8 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
         opacity: opacity,
         ior: 1.33,
         thickness: 1.0,
-        emissive: new THREE.Color(props.emissive || '#000000'),
-        emissiveIntensity: props.emissiveIntensity || 0.1,
+        emissive: new THREE.Color(props.emissive || '#D2B48C'),
+        emissiveIntensity: 0.3, // Increased for brighter glow
       });
     });
   }, [opacity, iceNormalMap, iceRoughnessMap]);
@@ -312,7 +345,7 @@ function Fragment({ position, velocity, scale, color }) {
       meshRef.current.scale.multiplyScalar(0.98);
     }
   });
-  return ( <mesh ref={meshRef} position={position} scale={scale}> <boxGeometry args={[1,1,1]} /> <meshBasicMaterial color={color || "#222222"} /> </mesh> );
+  return ( <mesh ref={meshRef} position={position} scale={scale}> <boxGeometry args={[1,1,1]} /> <meshBasicMaterial color={color || "#D2B48C"} /> </mesh> );
 }
 
 function CameraController({ darkMatterProgress, targetPos }) {
@@ -326,6 +359,29 @@ function CameraController({ darkMatterProgress, targetPos }) {
     }
   });
   return null;
+}
+
+// Sandy Atmospheric Background
+function SandyAtmosphere() {
+  const meshRef = useRef();
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.05;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} scale={50}>
+      <sphereGeometry args={[1, 32, 32]} />
+      <meshBasicMaterial
+        color="#F4E4BC"
+        transparent={true}
+        opacity={0.15}
+        side={THREE.BackSide}
+      />
+    </mesh>
+  );
 }
 
 export default function Scene() {
@@ -343,6 +399,7 @@ export default function Scene() {
   const [binauralPaused, setBinauralPaused] = useState(false);
   const [voidRipples, setVoidRipples] = useState([]);
   const [realityTears, setRealityTears] = useState([]);
+  const [sacredGeometry, setSacredGeometry] = useState([]);
   const binauralAudioRef = useRef(null);
 
   // Performance optimizations based on device
@@ -350,6 +407,7 @@ export default function Scene() {
     maxFragments: isMobile ? 4 : 8,
     maxTrails: isMobile ? 2 : 5,
     maxRipples: isMobile ? 1 : 3,
+    maxGeometry: isMobile ? 2 : 4,
     animationSpeed: isMobile ? 0.5 : 1,
     enableBinaural: !isMobile // Disable background audio on mobile to save battery
   }), [isMobile]);
@@ -396,7 +454,7 @@ export default function Scene() {
       }
     }
     
-    // Create fragments with performance optimization
+    // Create fragments with sandy colors
     const frags = [];
     for (let i = 0; i < performanceSettings.maxFragments; i++) {
       frags.push({
@@ -409,7 +467,7 @@ export default function Scene() {
     }
     setFragments(frags);
     
-    // Create void ripples with performance limits
+    // Create enlightened ripples
     const ripples = [];
     for (let i = 0; i < performanceSettings.maxRipples; i++) {
       ripples.push({
@@ -426,7 +484,23 @@ export default function Scene() {
     }
     setVoidRipples(ripples);
     
-    // Create reality tears
+    // Create sacred geometry patterns
+    const geometry = [];
+    for (let i = 0; i < performanceSettings.maxGeometry; i++) {
+      geometry.push({
+        id: Date.now() + i + 200,
+        position: [
+          (Math.random() - 0.5) * 8,
+          (Math.random() - 0.5) * 8,
+          (Math.random() - 0.5) * 8
+        ],
+        scale: 0.3 + Math.random() * 0.4,
+        opacity: 0.4 + Math.random() * 0.3
+      });
+    }
+    setSacredGeometry(geometry);
+    
+    // Create energy flows
     const tears = [];
     for (let i = 0; i < 2; i++) {
       tears.push({
@@ -458,7 +532,7 @@ export default function Scene() {
     }, 500);
     
     setTimeout(() => setFragments([]), 1000);
-  }, [cubeVisible, performanceSettings.maxFragments, performanceSettings.maxRipples]);
+  }, [cubeVisible, performanceSettings.maxFragments, performanceSettings.maxRipples, performanceSettings.maxGeometry]);
 
   const handleReset = useCallback(() => {
     setMenuVisible(false); 
@@ -466,6 +540,7 @@ export default function Scene() {
     setBinauralPaused(false); // Resume binaural audio
     setVoidRipples([]);
     setRealityTears([]);
+    setSacredGeometry([]);
     
     // Resume binaural audio when returning to main menu
     if (binauralAudioRef.current && performanceSettings.enableBinaural) {
@@ -493,7 +568,7 @@ export default function Scene() {
     setMediaIsPlaying(isPlaying); 
   }, []);
 
-  // Update reality tears animation
+  // Update energy flows animation
   useEffect(() => {
     if (realityTears.length > 0) {
       const animate = () => {
@@ -510,11 +585,12 @@ export default function Scene() {
     }
   }, [realityTears.length]);
   
-  // Clean up ripples after they expand
+  // Clean up effects after they complete
   useEffect(() => {
     const cleanup = setTimeout(() => {
       setVoidRipples([]);
-    }, 3000);
+      setSacredGeometry([]);
+    }, 5000);
     return () => clearTimeout(cleanup);
   }, [voidRipples.length]);
 
@@ -528,20 +604,25 @@ export default function Scene() {
           left: 0, 
           width: '100vw', 
           height: '100vh', 
-          background: 'white',
+          background: 'linear-gradient(to bottom, #F5DEB3 0%, #D2B48C 50%, #DEB887 100%)',
           touchAction: 'none' // Prevent scrolling on touch
         }}
       >
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[5, 10, 7.5]} intensity={1.0} />
-        <directionalLight position={[-5, -5, -5]} intensity={0.6} />
+        {/* Brighter, warmer lighting setup */}
+        <ambientLight intensity={1.2} color="#F5DEB3" />
+        <directionalLight position={[5, 10, 7.5]} intensity={1.5} color="#FFFFFF" />
+        <directionalLight position={[-5, -5, -5]} intensity={0.8} color="#DEB887" />
+        <pointLight position={[0, 0, 0]} intensity={0.6} color="#F5DEB3" />
+
+        {/* Sandy atmospheric background */}
+        <SandyAtmosphere />
 
         <MinimalCube onFaceClick={handleCubeClick} visible={cubeVisible} opacity={cubeOpacity} />
         {fragments.map(frag => <Fragment key={frag.id} {...frag} />)}
         
         {darkMatterVisible && activeSection && (
           <>
-            {/* Main dark matter with larger scale */}
+            {/* Main energy orb with larger scale */}
             <group position={[ 
               darkMatterProgress * activeSection.targetPos[0], 
               darkMatterProgress * activeSection.targetPos[1], 
@@ -557,16 +638,16 @@ export default function Scene() {
               />
             </group>
             
-            {/* Trailing dark matter pieces with performance optimization */}
+            {/* Trailing energy orbs with performance optimization */}
             {[...Array(performanceSettings.maxTrails)].map((_, i) => (
-              <DarkMatterTrail
+              <EnergyOrbTrail
                 key={i}
                 position={[
                   darkMatterProgress * activeSection.targetPos[0] * (0.7 - i * 0.1),
                   darkMatterProgress * activeSection.targetPos[1] * (0.7 - i * 0.1),
                   darkMatterProgress * activeSection.targetPos[2] * (0.7 - i * 0.1)
                 ]}
-                opacity={0.3 - i * 0.05}
+                opacity={0.5 - i * 0.05}
                 scale={0.5 - i * 0.08}
                 delay={i * 0.3}
               />
@@ -574,25 +655,35 @@ export default function Scene() {
           </>
         )}
         
-        {/* Render void ripples */}
+        {/* Render enlightened ripples */}
         {voidRipples.map(ripple => (
-          <VoidRipple
+          <EnlightenedRipple
             key={ripple.id}
             origin={ripple.origin}
             scale={ripple.scale}
             opacity={ripple.opacity}
           />
         ))}
+
+        {/* Render sacred geometry */}
+        {sacredGeometry.map(geom => (
+          <SacredGeometry
+            key={geom.id}
+            position={geom.position}
+            scale={geom.scale}
+            opacity={geom.opacity}
+          />
+        ))}
         
-        {/* Render reality tears */}
+        {/* Render energy flows */}
         {realityTears.map(tear => (
-          <RealityTear
+          <EnergyFlow
             key={tear.id}
             startPos={tear.startPos}
             endPos={tear.endPos}
             progress={tear.progress}
           />
-        )        )}
+        ))}
         
         {darkMatterVisible && activeSection && <CameraController darkMatterProgress={darkMatterProgress} targetPos={activeSection.targetPos} />}
         <OrbitControls 
