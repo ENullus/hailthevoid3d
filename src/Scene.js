@@ -682,6 +682,5 @@ export default function Scene() {
           Device: {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | Touch: {isTouch ? 'Yes' : 'No'}
         </div>
       )}
-    </>
   );
 }
