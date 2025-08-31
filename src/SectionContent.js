@@ -247,6 +247,14 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           borderRadius: '8px',
           boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.3)'
         }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #00B7EB, #000)',
+            margin: '0 auto',
+            animation: 'pulse 1.5s infinite'
+          }} />
           <p style={{
             color: '#1A1A1A',
             fontSize: '1rem',
