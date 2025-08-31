@@ -1,4 +1,4 @@
-// src/Scene.js - Sandy Room with Metallic Cube and Menus
+// src/Scene.js - Clean Metallic Version
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, useTexture } from '@react-three/drei';
@@ -10,31 +10,31 @@ const sections = [
   {
     id: 'music',
     name: "FREQUENCIES",
-    materialProps: { color: "#C0C0C0", metalness: 1.0, roughness: 0.1, emissive: "#D3D3D3" },
+    materialProps: { color: "#C0C0C0", metalness: 1.0, roughness: 0.1, emissive: "#E0E0E0" },
     targetPos: [4, 0, 0]
   },
   {
     id: 'art',
     name: "DISRUPTIONS",
-    materialProps: { color: "#B8B8B8", metalness: 1.0, roughness: 0.1, emissive: "#DCDCDC" },
+    materialProps: { color: "#B8B8B8", metalness: 1.0, roughness: 0.05, emissive: "#D3D3D3" },
     targetPos: [-4, 0, 0]
   },
   {
     id: 'about',
     name: "HAIL THE VOID",
-    materialProps: { color: "#D3D3D3", metalness: 1.0, roughness: 0.1, emissive: "#E5E5E5" },
+    materialProps: { color: "#D3D3D3", metalness: 1.0, roughness: 0.1, emissive: "#F0F0F0" },
     targetPos: [0, 4, 0]
   },
   {
     id: 'submit',
     name: "SHADOWS",
-    materialProps: { color: "#A9A9A9", metalness: 1.0, roughness: 0.1, emissive: "#C0C0C0" },
+    materialProps: { color: "#A9A9A9", metalness: 1.0, roughness: 0.15, emissive: "#C0C0C0" },
     targetPos: [0, -4, 0]
   },
   {
     id: 'contact',
     name: "COLLAPSE",
-    materialProps: { color: "#BEBEBE", metalness: 1.0, roughness: 0.1, emissive: "#D3D3D3" },
+    materialProps: { color: "#BEBEBE", metalness: 1.0, roughness: 0.08, emissive: "#D8D8D8" },
     targetPos: [0, 0, 4]
   },
   {
@@ -44,7 +44,7 @@ const sections = [
       color: "#E0E0E0", 
       metalness: 1.0,
       roughness: 0.05, 
-      emissive: "#F0F0F0"
+      emissive: "#F5F5F5"
     },
     targetPos: [0, 0, -4],
     disabled: false
@@ -94,6 +94,7 @@ function useAutoPreview() {
     const TOTAL_TIME = 2 * 60 * 1000;
     const WARNING_TIME = 10 * 1000;
     const PREVIEW_DURATION = 30;
+    
     const STATIC_SITE_URL = 'https://hailthevoid.org';
     
     function schedulePreview() {
@@ -135,135 +136,8 @@ function useAutoPreview() {
   return { showWarning, timeLeft };
 }
 
-// Simple Room with Windows
-function SandyRoom() {
-  return (
-    <group>
-      {/* Sandy Floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -4, 0]}>
-        <planeGeometry args={[25, 25]} />
-        <meshPhysicalMaterial
-          color="#D2B48C"
-          metalness={0.1}
-          roughness={0.9}
-        />
-      </mesh>
-      
-      {/* Simple Walls */}
-      <mesh position={[-12, 0, 0]}>
-        <boxGeometry args={[0.5, 8, 20]} />
-        <meshPhysicalMaterial color="#8B7355" metalness={0.2} roughness={0.8} />
-      </mesh>
-      
-      <mesh position={[12, 0, 0]}>
-        <boxGeometry args={[0.5, 8, 20]} />
-        <meshPhysicalMaterial color="#8B7355" metalness={0.2} roughness={0.8} />
-      </mesh>
-      
-      <mesh position={[0, 0, -10]}>
-        <boxGeometry args={[24, 8, 0.5]} />
-        <meshPhysicalMaterial color="#8B7355" metalness={0.2} roughness={0.8} />
-      </mesh>
-      
-      {/* Ceiling */}
-      <mesh position={[0, 4, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[24, 20]} />
-        <meshPhysicalMaterial color="#A0856B" metalness={0.2} roughness={0.8} />
-      </mesh>
-    </group>
-  );
-}
-
-// Simple Light Beams through Windows
-function WindowLightBeam({ position, rotation, intensity }) {
-  const meshRef = useRef();
-  
-  useFrame((state) => {
-    if (meshRef.current) {
-      // Subtle animation
-      meshRef.current.material.opacity = intensity * (0.8 + Math.sin(state.clock.elapsedTime * 0.5) * 0.2);
-    }
-  });
-
-  return (
-    <mesh ref={meshRef} position={position} rotation={rotation}>
-      <coneGeometry args={[3, 12, 8, 1, true]} />
-      <meshBasicMaterial
-        color="#FFF8DC"
-        transparent={true}
-        opacity={intensity}
-        side={THREE.DoubleSide}
-        blending={THREE.AdditiveBlending}
-      />
-    </mesh>
-  );
-}
-
-// Floating Dust in Light
-function DustMotes({ count = 30 }) {
-  const pointsRef = useRef();
-  const velocities = useRef([]);
-  
-  const positions = useMemo(() => {
-    const pos = new Float32Array(count * 3);
-    velocities.current = [];
-    
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 15;
-      pos[i * 3 + 1] = Math.random() * 6 - 2;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 15;
-      
-      velocities.current.push({
-        x: (Math.random() - 0.5) * 0.003,
-        y: Math.random() * 0.001,
-        z: (Math.random() - 0.5) * 0.003
-      });
-    }
-    
-    return pos;
-  }, [count]);
-  
-  useFrame(() => {
-    if (pointsRef.current) {
-      const positions = pointsRef.current.geometry.attributes.position.array;
-      
-      for (let i = 0; i < count; i++) {
-        const vel = velocities.current[i];
-        positions[i * 3] += vel.x;
-        positions[i * 3 + 1] += vel.y;
-        positions[i * 3 + 2] += vel.z;
-        
-        // Reset if out of bounds
-        if (positions[i * 3] > 8) positions[i * 3] = -8;
-        if (positions[i * 3] < -8) positions[i * 3] = 8;
-        if (positions[i * 3 + 1] > 4) positions[i * 3 + 1] = -2;
-        if (positions[i * 3 + 1] < -2) positions[i * 3 + 1] = 4;
-        if (positions[i * 3 + 2] > 8) positions[i * 3 + 2] = -8;
-        if (positions[i * 3 + 2] < -8) positions[i * 3 + 2] = 8;
-      }
-      
-      pointsRef.current.geometry.attributes.position.needsUpdate = true;
-    }
-  });
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.015}
-        color="#FFF8DC"
-        transparent={true}
-        opacity={0.7}
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  );
-}
-
-// Energy Orb Trail Component (keeping your existing effects)
-function EnergyOrbTrail({ position, opacity, scale, delay }) {
+// Metallic Trail Component
+function MetallicTrail({ position, opacity, scale, delay }) {
   const meshRef = useRef();
   const time = useRef(delay);
 
@@ -278,7 +152,7 @@ function EnergyOrbTrail({ position, opacity, scale, delay }) {
       
       const pulseScale = scale * (1 + Math.sin(t * 2) * 0.2);
       meshRef.current.scale.setScalar(pulseScale);
-      meshRef.current.material.opacity = opacity * (0.7 + Math.sin(t) * 0.3);
+      meshRef.current.material.opacity = opacity * (0.5 + Math.sin(t) * 0.5);
     }
   });
 
@@ -287,19 +161,19 @@ function EnergyOrbTrail({ position, opacity, scale, delay }) {
       <sphereGeometry args={[0.3, 16, 16]} />
       <meshPhysicalMaterial
         color="#C0C0C0"
-        metalness={0.9}
-        roughness={0.2}
+        metalness={1.0}
+        roughness={0.1}
         transparent={true}
         opacity={opacity}
         emissive="#E0E0E0"
-        emissiveIntensity={0.5}
+        emissiveIntensity={0.3}
       />
     </mesh>
   );
 }
 
-// Void Ripple Effect (keeping but making metallic)
-function VoidRipple({ origin, scale, opacity }) {
+// Metallic Void Ripple Effect
+function MetallicRipple({ origin, scale, opacity }) {
   const meshRef = useRef();
   const time = useRef(0);
 
@@ -308,9 +182,15 @@ function VoidRipple({ origin, scale, opacity }) {
       time.current += delta;
       const t = time.current;
       
-      meshRef.current.scale.setScalar(scale * (1 + t * 2));
-      meshRef.current.material.opacity = opacity * Math.max(0, 1 - t * 0.5);
-      meshRef.current.rotation.z = t * 1.5;
+      meshRef.current.scale.setScalar(scale * (1 + t * 3));
+      meshRef.current.material.opacity = opacity * Math.max(0, 1 - t);
+      meshRef.current.rotation.z = t * 2;
+      
+      const positions = meshRef.current.geometry.attributes.position.array;
+      for (let i = 0; i < positions.length; i += 3) {
+        positions[i + 2] = Math.sin(positions[i] * 10 + t * 5) * 0.1;
+      }
+      meshRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });
 
@@ -328,8 +208,8 @@ function VoidRipple({ origin, scale, opacity }) {
   );
 }
 
-// Reality Tear Effect (keeping but metallic)
-function RealityTear({ startPos, endPos, progress }) {
+// Metallic Reality Tear Effect
+function MetallicTear({ startPos, endPos, progress }) {
   const meshRef = useRef();
   
   useFrame(() => {
@@ -337,9 +217,9 @@ function RealityTear({ startPos, endPos, progress }) {
       const curve = new THREE.QuadraticBezierCurve3(
         new THREE.Vector3(...startPos),
         new THREE.Vector3(
-          (startPos[0] + endPos[0]) / 2 + (Math.random() - 0.5) * 1,
-          (startPos[1] + endPos[1]) / 2 + (Math.random() - 0.5) * 1,
-          (startPos[2] + endPos[2]) / 2 + (Math.random() - 0.5) * 1
+          (startPos[0] + endPos[0]) / 2 + (Math.random() - 0.5) * 2,
+          (startPos[1] + endPos[1]) / 2 + (Math.random() - 0.5) * 2,
+          (startPos[2] + endPos[2]) / 2 + (Math.random() - 0.5) * 2
         ),
         new THREE.Vector3(...endPos)
       );
@@ -349,9 +229,9 @@ function RealityTear({ startPos, endPos, progress }) {
       
       points.forEach((point, i) => {
         if (i / points.length < progress) {
-          positions[i * 3] = point.x + (Math.random() - 0.5) * 0.05;
-          positions[i * 3 + 1] = point.y + (Math.random() - 0.5) * 0.05;
-          positions[i * 3 + 2] = point.z + (Math.random() - 0.5) * 0.05;
+          positions[i * 3] = point.x + (Math.random() - 0.5) * 0.1;
+          positions[i * 3 + 1] = point.y + (Math.random() - 0.5) * 0.1;
+          positions[i * 3 + 2] = point.z + (Math.random() - 0.5) * 0.1;
         }
       });
       
@@ -382,23 +262,17 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
         roughnessMap: iceRoughnessMap,
         normalScale: new THREE.Vector2(1, 1),
         transparent: true,
-        transmission: 0.9,
+        transmission: 0.7,
         opacity: opacity,
-        ior: 1.33,
+        ior: 1.5,
         thickness: 1.0,
         emissive: new THREE.Color(props.emissive || '#E0E0E0'),
-        emissiveIntensity: 0.4,
+        emissiveIntensity: 0.2,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.1
       });
     });
   }, [opacity, iceNormalMap, iceRoughnessMap]);
-
-  useFrame(() => {
-    if (meshRef.current && visible) {
-      // Gentle floating motion
-      meshRef.current.position.y = Math.sin(Date.now() * 0.001) * 0.1;
-      meshRef.current.rotation.y += 0.005;
-    }
-  });
 
   const handleClick = (event) => {
     if (!visible) return;
@@ -412,18 +286,12 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
       }
     }
   };
-  
-  return ( 
-    <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0,0,0]} visible={visible}> 
-      <boxGeometry args={[2,2,2]} /> 
-    </mesh> 
-  );
+  return ( <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0,0,0]} visible={visible}> <boxGeometry args={[2,2,2]} /> </mesh> );
 }
 
 function Fragment({ position, velocity, scale, color }) {
   const meshRef = useRef();
   const vel = useRef([...velocity]);
-  
   useFrame((state, delta) => {
     if (meshRef.current) {
       meshRef.current.position.x += vel.current[0] * delta;
@@ -434,13 +302,7 @@ function Fragment({ position, velocity, scale, color }) {
       meshRef.current.scale.multiplyScalar(0.98);
     }
   });
-  
-  return ( 
-    <mesh ref={meshRef} position={position} scale={scale}> 
-      <boxGeometry args={[1,1,1]} /> 
-      <meshBasicMaterial color={color || "#C0C0C0"} /> 
-    </mesh> 
-  );
+  return ( <mesh ref={meshRef} position={position} scale={scale}> <boxGeometry args={[1,1,1]} /> <meshBasicMaterial color={color || "#C0C0C0"} /> </mesh> );
 }
 
 function CameraController({ darkMatterProgress, targetPos }) {
@@ -478,7 +340,6 @@ export default function Scene() {
     maxFragments: isMobile ? 4 : 8,
     maxTrails: isMobile ? 2 : 5,
     maxRipples: isMobile ? 1 : 3,
-    maxDustMotes: isMobile ? 20 : 40,
     animationSpeed: isMobile ? 0.5 : 1,
     enableBinaural: !isMobile
   }), [isMobile]);
@@ -537,7 +398,7 @@ export default function Scene() {
     }
     setFragments(frags);
     
-    // Create void ripples
+    // Create metallic void ripples
     const ripples = [];
     for (let i = 0; i < performanceSettings.maxRipples; i++) {
       ripples.push({
@@ -554,7 +415,7 @@ export default function Scene() {
     }
     setVoidRipples(ripples);
     
-    // Create reality tears
+    // Create metallic reality tears
     const tears = [];
     for (let i = 0; i < 2; i++) {
       tears.push({
@@ -655,59 +516,19 @@ export default function Scene() {
           left: 0, 
           width: '100vw', 
           height: '100vh', 
-          background: 'linear-gradient(to bottom, #F4E4BC 0%, #D2B48C 70%, #8B7355 100%)',
+          background: 'linear-gradient(to bottom, #F5DEB3 0%, #D2B48C 100%)',
           touchAction: 'none'
         }}
       >
-        {/* Warm room lighting */}
-        <ambientLight intensity={0.4} color="#F0E68C" />
-        <directionalLight 
-          position={[10, 8, 5]} 
-          intensity={1.8} 
-          color="#FFFACD"
-          castShadow
-        />
-        <directionalLight 
-          position={[-8, 6, 3]} 
-          intensity={1.2} 
-          color="#F5DEB3"
-        />
-        <pointLight 
-          position={[0, 2, 8]} 
-          intensity={0.8} 
-          color="#FFF8DC"
-          distance={20}
-        />
-
-        {/* Simple room geometry */}
-        <SandyRoom />
-        
-        {/* Window light beams */}
-        <WindowLightBeam 
-          position={[8, 1, 2]} 
-          rotation={[0, -0.5, 0]} 
-          intensity={0.3}
-        />
-        <WindowLightBeam 
-          position={[-6, 2, 1]} 
-          rotation={[0, 0.4, 0]} 
-          intensity={0.25}
-        />
-        <WindowLightBeam 
-          position={[2, 3, 6]} 
-          rotation={[0.3, 0, 0]} 
-          intensity={0.2}
-        />
-        
-        {/* Floating dust motes */}
-        <DustMotes count={performanceSettings.maxDustMotes} />
+        <ambientLight intensity={0.6} color="#F0E68C" />
+        <directionalLight position={[5, 10, 7.5]} intensity={1.2} color="#FFFACD" />
+        <directionalLight position={[-5, -5, -5]} intensity={0.8} color="#F5DEB3" />
 
         <MinimalCube onFaceClick={handleCubeClick} visible={cubeVisible} opacity={cubeOpacity} />
         {fragments.map(frag => <Fragment key={frag.id} {...frag} />)}
         
         {darkMatterVisible && activeSection && (
           <>
-            {/* Main quantum visualization */}
             <group position={[ 
               darkMatterProgress * activeSection.targetPos[0], 
               darkMatterProgress * activeSection.targetPos[1], 
@@ -723,16 +544,15 @@ export default function Scene() {
               />
             </group>
             
-            {/* Trailing energy orbs */}
             {[...Array(performanceSettings.maxTrails)].map((_, i) => (
-              <EnergyOrbTrail
+              <MetallicTrail
                 key={i}
                 position={[
                   darkMatterProgress * activeSection.targetPos[0] * (0.7 - i * 0.1),
                   darkMatterProgress * activeSection.targetPos[1] * (0.7 - i * 0.1),
                   darkMatterProgress * activeSection.targetPos[2] * (0.7 - i * 0.1)
                 ]}
-                opacity={0.5 - i * 0.05}
+                opacity={0.3 - i * 0.05}
                 scale={0.5 - i * 0.08}
                 delay={i * 0.3}
               />
@@ -740,9 +560,8 @@ export default function Scene() {
           </>
         )}
         
-        {/* Render void ripples */}
         {voidRipples.map(ripple => (
-          <VoidRipple
+          <MetallicRipple
             key={ripple.id}
             origin={ripple.origin}
             scale={ripple.scale}
@@ -750,9 +569,8 @@ export default function Scene() {
           />
         ))}
         
-        {/* Render reality tears */}
         {realityTears.map(tear => (
-          <RealityTear
+          <MetallicTear
             key={tear.id}
             startPos={tear.startPos}
             endPos={tear.endPos}
@@ -777,60 +595,67 @@ export default function Scene() {
         <audio ref={binauralAudioRef} loop preload="auto" src="/audio/binaural_loop.mp3" />
       )}
       
-      {/* Auto-preview warning */}
       {showWarning && (
         <div style={{
           position: 'fixed',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          background: 'linear-gradient(145deg, #2C2C2C 0%, #1A1A1A 100%)',
-          border: '2px solid #C0C0C0',
-          borderRadius: '8px',
-          padding: '30px',
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #C0C0C0 50%, #A8A8A8 100%)',
+          border: '3px solid #808080',
+          borderRadius: '12px',
+          padding: '35px',
           textAlign: 'center',
-          color: '#E0E0E0',
+          color: '#000000',
           fontFamily: 'monospace',
           fontSize: '18px',
+          fontWeight: 'bold',
           zIndex: 10000,
-          boxShadow: '0 0 30px rgba(192,192,192,0.3), inset 0 2px 4px rgba(255,255,255,0.1)'
+          boxShadow: '0 0 40px rgba(0,0,0,0.3), inset 0 2px 8px rgba(255,255,255,0.4), inset 0 -2px 8px rgba(0,0,0,0.2)',
+          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.3)'
         }}>
           <div style={{ 
             marginBottom: '20px', 
-            color: '#C0C0C0',
-            textShadow: '0 0 10px rgba(192,192,192,0.5)'
+            color: '#2C2C2C',
+            textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.5)',
+            letterSpacing: '2px'
           }}>
             ⚠ INITIATING VOID GLIMPSE ⚠
           </div>
-          <div style={{ color: '#E0E0E0' }}>
+          <div style={{ 
+            color: '#1A1A1A',
+            textShadow: '0 1px 1px rgba(255,255,255,0.6)'
+          }}>
             Dimensional breach in {timeLeft} seconds...
           </div>
           <div style={{ 
             fontSize: '14px', 
             marginTop: '15px', 
-            color: '#A0A0A0',
-            fontStyle: 'italic'
+            color: '#4A4A4A',
+            fontStyle: 'italic',
+            textShadow: '0 1px 1px rgba(255,255,255,0.4)'
           }}>
             Move to cancel
           </div>
         </div>
       )}
       
-      {/* Device info for debugging */}
       {process.env.NODE_ENV === 'development' && (
         <div style={{
           position: 'fixed',
           top: 10,
           left: 10,
-          background: 'linear-gradient(145deg, #2C2C2C 0%, #1A1A1A 100%)',
-          color: '#E0E0E0',
+          background: 'linear-gradient(145deg, #E0E0E0 0%, #C8C8C8 50%, #B0B0B0 100%)',
+          color: '#2C2C2C',
           padding: '8px 12px',
           fontSize: '12px',
           fontFamily: 'monospace',
+          fontWeight: 'bold',
           zIndex: 9999,
-          border: '1px solid #404040',
-          borderRadius: '4px',
-          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.1)'
+          border: '2px solid #999999',
+          borderRadius: '6px',
+          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -1px 2px rgba(0,0,0,0.2)',
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
         }}>
           Device: {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | Touch: {isTouch ? 'Yes' : 'No'}
         </div>
