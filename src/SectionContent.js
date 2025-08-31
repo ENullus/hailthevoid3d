@@ -1,5 +1,4 @@
-// src/SectionContent.js - Updated with CMS Integration
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 const sectionContents = {
   about: {
@@ -153,8 +152,6 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     ? sectionContents[section.id]
     : null;
 
-  const panelClasses = `cyber-panel ${section ? 'is-active' : ''}`;
-
   if (!section || !currentSectionData) {
     return null;
   }
@@ -163,12 +160,57 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     const MediaElement = type === 'audio' ? 'audio' : 'video';
     
     return (
-      <div className="media-container" style={{ position: 'relative', overflow: 'visible' }}>
-        <div className="media-frame" style={{ overflow: 'visible' }}>
-          <div className="media-corner top-left" />
-          <div className="media-corner top-right" />
-          <div className="media-corner bottom-left" />
-          <div className="media-corner bottom-right" />
+      <div style={{ 
+        position: 'relative', 
+        overflow: 'visible',
+        background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+        border: '2px solid #808080',
+        borderRadius: '8px',
+        boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
+        padding: '10px'
+      }}>
+        <div style={{ 
+          position: 'relative',
+          overflow: 'visible',
+          border: '1px solid #999',
+          borderRadius: '6px'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: '-5px',
+            left: '-5px',
+            width: '10px',
+            height: '10px',
+            background: 'radial-gradient(circle, #00f, #000)',
+            borderRadius: '50%'
+          }} />
+          <div style={{
+            position: 'absolute',
+            top: '-5px',
+            right: '-5px',
+            width: '10px',
+            height: '10px',
+            background: 'radial-gradient(circle, #00f, #000)',
+            borderRadius: '50%'
+          }} />
+          <div style={{
+            position: 'absolute',
+            bottom: '-5px',
+            left: '-5px',
+            width: '10px',
+            height: '10px',
+            background: 'radial-gradient(circle, #00f, #000)',
+            borderRadius: '50%'
+          }} />
+          <div style={{
+            position: 'absolute',
+            bottom: '-5px',
+            right: '-5px',
+            width: '10px',
+            height: '10px',
+            background: 'radial-gradient(circle, #00f, #000)',
+            borderRadius: '50%'
+          }} />
           
           <MediaElement
             ref={type === 'video' ? videoRef : null}
@@ -177,13 +219,14 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             onPause={() => onMediaPlayingChange(false)}
             onEnded={() => onMediaPlayingChange(false)}
             src={src}
-            className="media-player-shape"
             style={{
               width: '100%',
               maxHeight: type === 'video' ? '350px' : 'auto',
               pointerEvents: 'auto',
               position: 'relative',
               zIndex: 1,
+              background: '#000',
+              borderRadius: '4px'
             }}
             muted={false}
           >
@@ -191,9 +234,14 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           </MediaElement>
         </div>
         
-        <div className="media-info">
-          <span className="info-label">SOURCE:</span>
-          <span className="info-value">{title || src.split('/').pop()}</span>
+        <div style={{
+          marginTop: '10px',
+          color: '#D0D0D0',
+          fontSize: '0.9rem',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)'
+        }}>
+          <span style={{ fontWeight: 'bold' }}>SOURCE:</span>
+          <span style={{ marginLeft: '5px' }}>{title || src.split('/').pop()}</span>
         </div>
       </div>
     );
@@ -202,17 +250,49 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
   const renderContentGrid = (items, type) => {
     if (cmsLoading) {
       return (
-        <div className="loading-container">
-          <div className="loading-bar" />
-          <p className="loading-text">ACCESSING {type.toUpperCase()} MATRIX...</p>
+        <div style={{
+          textAlign: 'center',
+          padding: '20px',
+          background: 'linear-gradient(145deg, #B0B0B0 0%, #A0A0A0 100%)',
+          borderRadius: '8px',
+          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #00f, #000)',
+            margin: '0 auto',
+            animation: 'pulse 1.5s infinite'
+          }} />
+          <p style={{
+            color: '#D0D0D0',
+            fontSize: '1rem',
+            textShadow: '0 0 5px rgba(0,0,255,0.3)',
+            marginTop: '10px'
+          }}>
+            ACCESSING {type.toUpperCase()} MATRIX...
+          </p>
         </div>
       );
     }
 
     if (cmsError) {
       return (
-        <div className="content-empty">
-          <p>Error loading content: {cmsError}</p>
+        <div style={{
+          textAlign: 'center',
+          padding: '20px',
+          background: 'linear-gradient(145deg, #B0B0B0 0%, #A0A0A0 100%)',
+          borderRadius: '8px',
+          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.3)'
+        }}>
+          <p style={{
+            color: '#FF4040',
+            fontSize: '1rem',
+            textShadow: '0 0 5px rgba(255,0,0,0.3)'
+          }}>
+            Error loading content: {cmsError}
+          </p>
         </div>
       );
     }
@@ -222,38 +302,75 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     }
 
     return (
-      <div className="content-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+        gap: '20px',
+        padding: '20px'
+      }}>
         {items.map((item, index) => (
-          <div key={index} className="content-item" style={{ 
-            background: 'rgba(255,255,255,0.03)', 
-            border: '1px solid rgba(255,255,255,0.1)', 
+          <div key={index} style={{ 
+            background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+            border: '2px solid #808080',
+            borderRadius: '8px',
             padding: '20px',
+            boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
             transition: 'all 0.3s ease'
           }}>
-            <div className="content-title" style={{ fontSize: '1.1rem', marginBottom: '10px', color: '#fff' }}>
+            <div style={{ 
+              fontSize: '1.1rem', 
+              marginBottom: '10px', 
+              color: '#D0D0D0',
+              textShadow: '0 0 5px rgba(0,0,255,0.3)',
+              fontWeight: 'bold'
+            }}>
               {item.title || 'Untitled'}
             </div>
             
             {item.artist && (
-              <div className="content-artist" style={{ fontSize: '0.9rem', color: '#ccc', marginBottom: '8px' }}>
+              <div style={{ 
+                fontSize: '0.9rem', 
+                color: '#B0B0B0', 
+                marginBottom: '8px',
+                textShadow: '0 0 3px rgba(0,0,255,0.2)'
+              }}>
                 by {item.artist}
               </div>
             )}
             
             {item.description && (
-              <div className="content-desc" style={{ fontSize: '0.9rem', color: '#999', marginBottom: '15px' }}>
+              <div style={{ 
+                fontSize: '0.9rem', 
+                color: '#A0A0A0', 
+                marginBottom: '15px',
+                textShadow: '0 0 3px rgba(0,0,255,0.2)'
+              }}>
                 {item.description}
               </div>
             )}
 
             {/* YouTube Video */}
             {item.youtube_url && (
-              <div className="media-section" style={{ marginBottom: '15px' }}>
-                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
+              <div style={{ marginBottom: '15px' }}>
+                <div style={{ 
+                  position: 'relative', 
+                  paddingBottom: '56.25%', 
+                  height: 0, 
+                  overflow: 'hidden',
+                  border: '2px solid #808080',
+                  borderRadius: '6px',
+                  boxShadow: '0 0 15px rgba(0,0,255,0.2)'
+                }}>
                   <iframe 
                     src={item.youtube_url.includes('embed') ? item.youtube_url : item.youtube_url.replace('watch?v=', 'embed/')}
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                    frameBorder="0"
+                    style={{ 
+                      position: 'absolute', 
+                      top: 0, 
+                      left: 0, 
+                      width: '100%', 
+                      height: '100%',
+                      border: 'none'
+                    }}
                     allowFullScreen
                     title={item.title || 'Video content'}
                     onLoad={() => onMediaPlayingChange(false)}
@@ -264,18 +381,31 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
 
             {/* Audio Player */}
             {(item.primary_audio || item.audio_files) && (
-              <div className="media-section" style={{ marginBottom: '15px' }}>
+              <div style={{ marginBottom: '15px' }}>
                 {item.primary_audio && renderMediaPlayer('audio', item.primary_audio, item.title)}
                 
                 {item.audio_files && Array.isArray(item.audio_files) && item.audio_files.length > 0 && (
-                  <div className="additional-files" style={{ marginTop: '10px' }}>
-                    <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>Additional tracks:</p>
+                  <div style={{ marginTop: '10px' }}>
+                    <p style={{ 
+                      fontSize: '0.8rem', 
+                      color: '#A0A0A0', 
+                      marginBottom: '10px',
+                      textShadow: '0 0 3px rgba(0,0,255,0.2)'
+                    }}>
+                      Additional tracks:
+                    </p>
                     {item.audio_files.slice(0, 3).map((audio, i) => (
                       <audio 
                         key={i} 
                         controls 
                         src={audio} 
-                        style={{ width: '100%', margin: '5px 0' }}
+                        style={{ 
+                          width: '100%', 
+                          margin: '5px 0',
+                          background: 'linear-gradient(145deg, #E0E0E0 0%, #C0C0C0 100%)',
+                          border: '1px solid #808080',
+                          borderRadius: '4px'
+                        }}
                         onPlay={() => onMediaPlayingChange(true)}
                         onPause={() => onMediaPlayingChange(false)}
                         onEnded={() => onMediaPlayingChange(false)}
@@ -288,18 +418,32 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
 
             {/* Video Player */}
             {(item.primary_video || item.video_files) && !item.youtube_url && (
-              <div className="media-section" style={{ marginBottom: '15px' }}>
+              <div style={{ marginBottom: '15px' }}>
                 {item.primary_video && renderMediaPlayer('video', item.primary_video, item.title)}
                 
                 {item.video_files && Array.isArray(item.video_files) && item.video_files.length > 0 && (
-                  <div className="additional-files" style={{ marginTop: '10px' }}>
-                    <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>Additional videos:</p>
+                  <div style={{ marginTop: '10px' }}>
+                    <p style={{ 
+                      fontSize: '0.8rem', 
+                      color: '#A0A0A0', 
+                      marginBottom: '10px',
+                      textShadow: '0 0 3px rgba(0,0,255,0.2)'
+                    }}>
+                      Additional videos:
+                    </p>
                     {item.video_files.slice(0, 2).map((video, i) => (
                       <video 
                         key={i} 
                         controls 
                         src={video} 
-                        style={{ width: '100%', maxHeight: '200px', margin: '5px 0' }}
+                        style={{ 
+                          width: '100%', 
+                          maxHeight: '200px', 
+                          margin: '5px 0',
+                          background: '#000',
+                          border: '1px solid #808080',
+                          borderRadius: '4px'
+                        }}
                         onPlay={() => onMediaPlayingChange(true)}
                         onPause={() => onMediaPlayingChange(false)}
                         onEnded={() => onMediaPlayingChange(false)}
@@ -312,17 +456,29 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
 
             {/* Image Display */}
             {(item.primary_image || item.gallery_images) && (
-              <div className="image-section" style={{ marginBottom: '15px' }}>
+              <div style={{ marginBottom: '15px' }}>
                 {item.primary_image && (
                   <img 
                     src={item.primary_image} 
                     alt={item.title} 
-                    style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', marginBottom: '10px' }}
+                    style={{ 
+                      width: '100%', 
+                      maxHeight: '300px', 
+                      objectFit: 'cover', 
+                      marginBottom: '10px',
+                      border: '2px solid #808080',
+                      borderRadius: '6px',
+                      boxShadow: '0 0 15px rgba(0,0,255,0.2)'
+                    }}
                   />
                 )}
                 
                 {item.gallery_images && Array.isArray(item.gallery_images) && item.gallery_images.length > 0 && (
-                  <div className="image-gallery" style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '5px', 
+                    flexWrap: 'wrap' 
+                  }}>
                     {item.gallery_images.slice(0, 4).map((img, i) => (
                       <img 
                         key={i} 
@@ -332,7 +488,9 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                           width: '23%', 
                           height: '80px', 
                           objectFit: 'cover',
-                          border: '1px solid rgba(255,255,255,0.1)'
+                          border: '1px solid #808080',
+                          borderRadius: '4px',
+                          boxShadow: '0 0 10px rgba(0,0,255,0.1)'
                         }}
                       />
                     ))}
@@ -342,33 +500,69 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             )}
 
             {/* Metadata */}
-            <div className="content-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '0.8rem', color: '#666' }}>
-              {item.genre && <span className="meta-tag">#{item.genre}</span>}
-              {item.duration && <span className="meta-tag">{item.duration}</span>}
-              {item.medium && <span className="meta-tag">{item.medium}</span>}
-              {item.date && <span className="meta-tag">{new Date(item.date).toLocaleDateString()}</span>}
+            <div style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: '10px', 
+              fontSize: '0.8rem', 
+              color: '#A0A0A0',
+              textShadow: '0 0 3px rgba(0,0,255,0.2)'
+            }}>
+              {item.genre && <span># {item.genre}</span>}
+              {item.duration && <span>{item.duration}</span>}
+              {item.medium && <span>{item.medium}</span>}
+              {item.date && <span>{new Date(item.date).toLocaleDateString()}</span>}
             </div>
 
             {/* External Links */}
             {(item.bandcamp_url || item.soundcloud_url || item.spotify_url || item.artist_website) && (
-              <div className="external-links" style={{ marginTop: '15px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ 
+                marginTop: '15px', 
+                display: 'flex', 
+                gap: '10px', 
+                flexWrap: 'wrap' 
+              }}>
                 {item.bandcamp_url && (
-                  <a href={item.bandcamp_url} target="_blank" rel="noopener noreferrer" style={{ color: '#00ff00', fontSize: '0.8rem' }}>
+                  <a href={item.bandcamp_url} target="_blank" rel="noopener noreferrer" style={{ 
+                    color: '#00B7EB', 
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    textShadow: '0 0 5px rgba(0,183,235,0.3)',
+                    transition: 'color 0.3s ease'
+                  }}>
                     BANDCAMP →
                   </a>
                 )}
                 {item.soundcloud_url && (
-                  <a href={item.soundcloud_url} target="_blank" rel="noopener noreferrer" style={{ color: '#00ff00', fontSize: '0.8rem' }}>
+                  <a href={item.soundcloud_url} target="_blank" rel="noopener noreferrer" style={{ 
+                    color: '#00B7EB', 
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    textShadow: '0 0 5px rgba(0,183,235,0.3)',
+                    transition: 'color 0.3s ease'
+                  }}>
                     SOUNDCLOUD →
                   </a>
                 )}
                 {item.spotify_url && (
-                  <a href={item.spotify_url} target="_blank" rel="noopener noreferrer" style={{ color: '#00ff00', fontSize: '0.8rem' }}>
+                  <a href={item.spotify_url} target="_blank" rel="noopener noreferrer" style={{ 
+                    color: '#00B7EB', 
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    textShadow: '0 0 5px rgba(0,183,235,0.3)',
+                    transition: 'color 0.3s ease'
+                  }}>
                     SPOTIFY →
                   </a>
                 )}
                 {item.artist_website && (
-                  <a href={item.artist_website} target="_blank" rel="noopener noreferrer" style={{ color: '#00ff00', fontSize: '0.8rem' }}>
+                  <a href={item.artist_website} target="_blank" rel="noopener noreferrer" style={{ 
+                    color: '#00B7EB', 
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    textShadow: '0 0 5px rgba(0,183,235,0.3)',
+                    transition: 'color 0.3s ease'
+                  }}>
                     ARTIST SITE →
                   </a>
                 )}
@@ -384,46 +578,107 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
 
   if (section.id === 'about') {
     sectionSpecificContent = (
-      <div className="content-wrapper">
-        <div className="content-header">
-          <div className="data-line">ACCESSING CONSCIOUSNESS MATRIX...</div>
+      <div style={{
+        padding: '20px',
+        background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+        borderRadius: '8px',
+        boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+      }}>
+        <div style={{
+          color: '#D0D0D0',
+          fontSize: '0.9rem',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)',
+          marginBottom: '15px'
+        }}>
+          ACCESSING CONSCIOUSNESS MATRIX...
         </div>
-        <div className="text-content">
-          <p className="enhanced-text">{currentSectionData.content}</p>
+        <div style={{
+          color: '#B0B0B0',
+          lineHeight: '1.6',
+          fontSize: '1rem',
+          textShadow: '0 0 3px rgba(0,0,255,0.2)'
+        }}>
+          <p>{currentSectionData.content}</p>
         </div>
-        <div className="content-footer">
-          <div className="status-indicator">
-            <span className="indicator-dot active" />
-            <span className="indicator-text">NEURAL LINK ESTABLISHED</span>
-          </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginTop: '15px'
+        }}>
+          <div style={{
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #00f, #000)',
+            marginRight: '10px'
+          }} />
+          <span style={{
+            color: '#D0D0D0',
+            fontSize: '0.9rem',
+            textShadow: '0 0 5px rgba(0,0,255,0.3)'
+          }}>
+            NEURAL LINK ESTABLISHED
+          </span>
         </div>
       </div>
     );
   } else if (section.id === 'music') {
     sectionSpecificContent = (
-      <div className="content-wrapper">
-        <div className="content-header">
-          <div className="data-line">FREQUENCY MODULATION: <span className="highlight">ACTIVE</span></div>
+      <div style={{
+        padding: '20px'
+      }}>
+        <div style={{
+          color: '#D0D0D0',
+          fontSize: '0.9rem',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)',
+          marginBottom: '15px'
+        }}>
+          FREQUENCY MODULATION: <span style={{ color: '#00B7EB' }}>ACTIVE</span>
         </div>
         
-        <div className="visualization-bars">
+        <div style={{
+          display: 'flex',
+          gap: '2px',
+          marginBottom: '20px',
+          height: '30px'
+        }}>
           {[...Array(20)].map((_, i) => (
-            <div key={i} className="bar" style={{ animationDelay: `${i * 0.05}s` }} />
+            <div key={i} style={{
+              width: '5px',
+              background: 'linear-gradient(180deg, #00B7EB, #000)',
+              animation: 'pulse 1.5s infinite',
+              animationDelay: `${i * 0.05}s`
+            }} />
           ))}
         </div>
         
         {renderContentGrid(cmsContent, 'music')}
         
-        <div className="waveform-display">
-          <canvas className="waveform" />
+        <div style={{
+          marginTop: '20px'
+        }}>
+          <canvas style={{
+            width: '100%',
+            height: '50px',
+            background: 'linear-gradient(145deg, #000, #222)',
+            border: '1px solid #808080',
+            borderRadius: '4px'
+          }} />
         </div>
       </div>
     );
   } else if (section.id === 'art') {
     sectionSpecificContent = (
-      <div className="content-wrapper">
-        <div className="content-header">
-          <div className="data-line">VISUAL CORTEX INTERFACE: <span className="highlight">SYNCED</span></div>
+      <div style={{
+        padding: '20px'
+      }}>
+        <div style={{
+          color: '#D0D0D0',
+          fontSize: '0.9rem',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)',
+          marginBottom: '15px'
+        }}>
+          VISUAL CORTEX INTERFACE: <span style={{ color: '#00B7EB' }}>SYNCED</span>
         </div>
         
         {renderContentGrid(cmsContent, 'disruptions')}
@@ -431,23 +686,37 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     );
   } else if (section.id === 'video') {
     sectionSpecificContent = (
-      <div className="content-wrapper">
-        <div className="content-header">
-          <div className="data-line">TEMPORAL STREAM: <span className="highlight">BUFFERING</span></div>
+      <div style={{
+        padding: '20px'
+      }}>
+        <div style={{
+          color: '#D0D0D0',
+          fontSize: '0.9rem',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)',
+          marginBottom: '15px'
+        }}>
+          TEMPORAL STREAM: <span style={{ color: '#00B7EB' }}>BUFFERING</span>
         </div>
         
-        <div className="stream-stats">
-          <div className="stat">
-            <span className="stat-label">BITRATE:</span>
-            <span className="stat-value">∞</span>
+        <div style={{
+          display: 'flex',
+          gap: '20px',
+          marginBottom: '20px',
+          color: '#B0B0B0',
+          fontSize: '0.9rem',
+          textShadow: '0 0 3px rgba(0,0,255,0.2)'
+        }}>
+          <div>
+            <span style={{ fontWeight: 'bold' }}>BITRATE:</span>
+            <span style={{ marginLeft: '5px' }}>∞</span>
           </div>
-          <div className="stat">
-            <span className="stat-label">DIMENSION:</span>
-            <span className="stat-value">4D</span>
+          <div>
+            <span style={{ fontWeight: 'bold' }}>DIMENSION:</span>
+            <span style={{ marginLeft: '5px' }}>4D</span>
           </div>
-          <div className="stat">
-            <span className="stat-label">SYNC:</span>
-            <span className="stat-value pulse">LIVE</span>
+          <div>
+            <span style={{ fontWeight: 'bold' }}>SYNC:</span>
+            <span style={{ color: '#00B7EB', animation: 'pulse 1.5s infinite' }}>LIVE</span>
           </div>
         </div>
         
@@ -458,150 +727,443 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     const mailtoLink = `mailto:submission@hailthevoid.net?subject=Art Submission: Hail The Void&body=Greetings,%0D%0A%0D%0AI would like to submit my artwork for consideration.%0D%0A%0D%0A[Link to my art/portfolio or attach files]%0D%0A%0D%0AThank you.`;
     
     sectionSpecificContent = (
-      <div className="content-wrapper">
-        <div className="content-header">
-          <div className="data-line">SUBMISSION PROTOCOL: <span className="highlight">READY</span></div>
+      <div style={{
+        padding: '20px'
+      }}>
+        <div style={{
+          color: '#D0D0D0',
+          fontSize: '0.9rem',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)',
+          marginBottom: '15px'
+        }}>
+          SUBMISSION PROTOCOL: <span style={{ color: '#00B7EB' }}>READY</span>
         </div>
         
-        <div className="submission-interface">
-          <div className="protocol-display">
-            <div className="protocol-line">
-              <span className="line-number">001</span>
-              <span className="line-text">PREPARE_DIGITAL_CONSCIOUSNESS</span>
+        <div style={{
+          marginBottom: '20px',
+          padding: '15px',
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          border: '2px solid #808080',
+          borderRadius: '8px',
+          boxShadow: '0 0 20px rgba(0,0,255,0.2)'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '5px',
+            color: '#B0B0B0',
+            fontSize: '0.9rem',
+            textShadow: '0 0 3px rgba(0,0,255,0.2)'
+          }}>
+            <div>
+              <span style={{ marginRight: '10px', color: '#00B7EB' }}>001</span>
+              <span>PREPARE_DIGITAL_CONSCIOUSNESS</span>
             </div>
-            <div className="protocol-line">
-              <span className="line-number">002</span>
-              <span className="line-text">ALIGN_CREATIVE_FREQUENCY</span>
+            <div>
+              <span style={{ marginRight: '10px', color: '#00B7EB' }}>002</span>
+              <span>ALIGN_CREATIVE_FREQUENCY</span>
             </div>
-            <div className="protocol-line">
-              <span className="line-number">003</span>
-              <span className="line-text">INITIATE_TRANSMISSION</span>
+            <div>
+              <span style={{ marginRight: '10px', color: '#00B7EB' }}>003</span>
+              <span>INITIATE_TRANSMISSION</span>
             </div>
           </div>
-          
-          {cmsContent.length > 0 && (
-            <div className="submissions-preview">
-              <h3 style={{ color: '#fff', marginBottom: '15px' }}>Recent Submissions:</h3>
-              {renderContentGrid(cmsContent.slice(0, 3), 'submissions')}
-            </div>
-          )}
-          
-          <p className="enhanced-text">
-            Your artistic transmissions must resonate with the void's frequency. 
-            Ensure dimensional compatibility before upload.
-          </p>
-          
-          <a href={mailtoLink} className="cyber-button enhanced">
-            <span className="button-text">OPEN PORTAL</span>
-            <span className="button-glitch" data-text="OPEN PORTAL">OPEN PORTAL</span>
-          </a>
-          
-          <div className="warning-text">
-            ⚠ CAUTION: Email client will breach current dimension
+        </div>
+        
+        {cmsContent.length > 0 && (
+          <div style={{
+            marginBottom: '20px'
+          }}>
+            <h3 style={{ 
+              color: '#D0D0D0', 
+              marginBottom: '15px',
+              textShadow: '0 0 5px rgba(0,0,255,0.3)'
+            }}>
+              Recent Submissions:
+            </h3>
+            {renderContentGrid(cmsContent.slice(0, 3), 'submissions')}
           </div>
+        )}
+        
+        <p style={{
+          color: '#B0B0B0',
+          fontSize: '1rem',
+          textShadow: '0 0 3px rgba(0,0,255,0.2)',
+          marginBottom: '20px'
+        }}>
+          Your artistic transmissions must resonate with the void's frequency. 
+          Ensure dimensional compatibility before upload.
+        </p>
+        
+        <a href={mailtoLink} style={{
+          display: 'inline-block',
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          border: '2px solid #808080',
+          borderRadius: '8px',
+          padding: '12px 25px',
+          color: '#D0D0D0',
+          textDecoration: 'none',
+          fontWeight: 'bold',
+          fontSize: '1rem',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)',
+          boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
+          transition: 'all 0.3s ease'
+        }}>
+          OPEN PORTAL
+        </a>
+        
+        <div style={{
+          color: '#FF4040',
+          fontSize: '0.9rem',
+          marginTop: '15px',
+          textShadow: '0 0 5px rgba(255,0,0,0.3)'
+        }}>
+          ⚠ CAUTION: Email client will breach current dimension
         </div>
       </div>
     );
   } else if (section.id === 'contact') {
     sectionSpecificContent = (
-      <div className="content-wrapper">
-        <div className="content-header">
-          <div className="data-line">COMMUNICATION ARRAY: <span className="highlight">ONLINE</span></div>
+      <div style={{
+        padding: '20px'
+      }}>
+        <div style={{
+          color: '#D0D0D0',
+          fontSize: '0.9rem',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)',
+          marginBottom: '15px'
+        }}>
+          COMMUNICATION ARRAY: <span style={{ color: '#00B7EB' }}>ONLINE</span>
         </div>
         
-        <div className="contact-interface">
-          <div className="signal-strength">
-            <div className="signal-bar active" />
-            <div className="signal-bar active" />
-            <div className="signal-bar active" />
-            <div className="signal-bar" />
-            <div className="signal-bar" />
+        <div style={{
+          display: 'flex',
+          gap: '5px',
+          marginBottom: '20px'
+        }}>
+          <div style={{ 
+            width: '8px', 
+            height: '20px', 
+            background: 'linear-gradient(180deg, #00B7EB, #000)',
+            borderRadius: '2px'
+          }} />
+          <div style={{ 
+            width: '8px', 
+            height: '20px', 
+            background: 'linear-gradient(180deg, #00B7EB, #000)',
+            borderRadius: '2px'
+          }} />
+          <div style={{ 
+            width: '8px', 
+            height: '20px', 
+            background: 'linear-gradient(180deg, #00B7EB, #000)',
+            borderRadius: '2px'
+          }} />
+          <div style={{ 
+            width: '8px', 
+            height: '20px', 
+            background: 'linear-gradient(180deg, #333, #000)',
+            borderRadius: '2px'
+          }} />
+          <div style={{ 
+            width: '8px', 
+            height: '20px', 
+            background: 'linear-gradient(180deg, #333, #000)',
+            borderRadius: '2px'
+          }} />
+        </div>
+        
+        <p style={{
+          color: '#B0B0B0',
+          fontSize: '1rem',
+          textShadow: '0 0 3px rgba(0,0,255,0.2)',
+          marginBottom: '20px'
+        }}>
+          Establish quantum entanglement. Your transmission will echo through the void.
+        </p>
+        
+        <div>
+          <div style={{ marginBottom: '15px' }}>
+            <label htmlFor="contact-name" style={{
+              display: 'block',
+              color: '#D0D0D0',
+              fontWeight: 'bold',
+              marginBottom: '5px',
+              textShadow: '0 0 5px rgba(0,0,255,0.3)'
+            }}>
+              ENTITY_DESIGNATION
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="text" 
+                id="contact-name" 
+                name="name" 
+                required 
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                  border: '2px solid #808080',
+                  borderRadius: '6px',
+                  color: '#1A1A1A',
+                  fontWeight: 'bold',
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: '0',
+                left: '0',
+                width: '100%',
+                height: '2px',
+                background: 'linear-gradient(90deg, transparent, #00B7EB, transparent)',
+                animation: 'scan 2s infinite'
+              }} />
+            </div>
           </div>
           
-          <p className="enhanced-text">
-            Establish quantum entanglement. Your transmission will echo through the void.
-          </p>
+          <div style={{ marginBottom: '15px' }}>
+            <label htmlFor="contact-email" style={{
+              display: 'block',
+              color: '#D0D0D0',
+              fontWeight: 'bold',
+              marginBottom: '5px',
+              textShadow: '0 0 5px rgba(0,0,255,0.3)'
+            }}>
+              RETURN_FREQUENCY
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="email" 
+                id="contact-email" 
+                name="email" 
+                required 
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                  border: '2px solid #808080',
+                  borderRadius: '6px',
+                  color: '#1A1A1A',
+                  fontWeight: 'bold',
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: '0',
+                left: '0',
+                width: '100%',
+                height: '2px',
+                background: 'linear-gradient(90deg, transparent, #00B7EB, transparent)',
+                animation: 'scan 2s infinite'
+              }} />
+            </div>
+          </div>
           
-          <form
-            action="https://formspree.io/f/YOUR_UNIQUE_FORM_ID"
-            method="POST"
-            className="cyber-form enhanced"
+          <div style={{ marginBottom: '20px' }}>
+            <label htmlFor="contact-message" style={{
+              display: 'block',
+              color: '#D0D0D0',
+              fontWeight: 'bold',
+              marginBottom: '5px',
+              textShadow: '0 0 5px rgba(0,0,255,0.3)'
+            }}>
+              DATA_PACKET
+            </label>
+            <div style={{ position: 'relative' }}>
+              <textarea 
+                id="contact-message" 
+                name="message" 
+                rows="6" 
+                required 
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                  border: '2px solid #808080',
+                  borderRadius: '6px',
+                  color: '#1A1A1A',
+                  fontWeight: 'bold',
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
+                  resize: 'vertical'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: '0',
+                left: '0',
+                width: '100%',
+                height: '2px',
+                background: 'linear-gradient(90deg, transparent, #00B7EB, transparent)',
+                animation: 'scan 2s infinite'
+              }} />
+            </div>
+          </div>
+          
+          <button 
+            type="submit" 
+            style={{
+              background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+              border: '2px solid #808080',
+              borderRadius: '8px',
+              padding: '12px 25px',
+              color: '#D0D0D0',
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              textShadow: '0 0 5px rgba(0,0,255,0.3)',
+              boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
           >
-            <div className="form-field">
-              <label htmlFor="contact-name">ENTITY_DESIGNATION</label>
-              <div className="input-wrapper">
-                <input type="text" id="contact-name" name="name" required />
-                <div className="input-scanner" />
-              </div>
-            </div>
-            
-            <div className="form-field">
-              <label htmlFor="contact-email">RETURN_FREQUENCY</label>
-              <div className="input-wrapper">
-                <input type="email" id="contact-email" name="email" required />
-                <div className="input-scanner" />
-              </div>
-            </div>
-            
-            <div className="form-field">
-              <label htmlFor="contact-message">DATA_PACKET</label>
-              <div className="input-wrapper">
-                <textarea id="contact-message" name="message" rows="6" required />
-                <div className="input-scanner" />
-              </div>
-            </div>
-            
-            <button type="submit" className="cyber-button enhanced">
-              <span className="button-text">TRANSMIT</span>
-              <span className="button-glitch" data-text="TRANSMIT">TRANSMIT</span>
-            </button>
-          </form>
-          
-          <div className="transmission-info">
-            <div className="info-icon">⟨⟩</div>
-            <span>Third-party quantum relay active</span>
-          </div>
+            TRANSMIT
+          </button>
+        </div>
+        
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginTop: '15px',
+          color: '#B0B0B0',
+          fontSize: '0.9rem',
+          textShadow: '0 0 3px rgba(0,0,255,0.2)'
+        }}>
+          <div style={{ marginRight: '10px' }}>⟨⟩</div>
+          <span>Third-party quantum relay active</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={panelClasses}>
-      <div className="ui-module ui-module-header">
-        <div className="header-decoration top" />
-        <div className="header-content">
-          <h2 className="glitchy-text-subtle">
-            {currentSectionData.title || section.name?.toUpperCase()}
-          </h2>
-          {currentSectionData.subtitle && (
-            <div className="subtitle">{currentSectionData.subtitle}</div>
-          )}
-        </div>
-        <button onClick={onReset} className="reset-button">
-          <span className="reset-icon">✕</span>
-        </button>
-        <div className="header-decoration bottom" />
-      </div>
-      
-      <div className="ui-module ui-module-content">
-        <div className="content-scanlines" />
-        {sectionSpecificContent}
-      </div>
-      
-      <div className="ui-module ui-module-footer">
-        <div className="footer-data">
-          <span className="data-label">SECTOR:</span>
-          <span className="data-value">{section.id?.toUpperCase()}</span>
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      background: 'rgba(0,0,0,0.1)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      pointerEvents: 'auto'
+    }}>
+      <div style={{
+        width: '90%',
+        maxWidth: '800px',
+        maxHeight: '85vh',
+        background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+        border: '4px solid #808080',
+        borderRadius: '12px',
+        boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <div style={{
+          background: 'linear-gradient(145deg, #E0E0E0 0%, #C8C8C8 50%, #B0B0B0 100%)',
+          borderBottom: '3px solid #808080',
+          padding: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)'
+        }}>
+          <div>
+            <h2 style={{
+              margin: 0,
+              color: '#D0D0D0',
+              fontSize: '1.8rem',
+              fontWeight: 'bold',
+              letterSpacing: '2px',
+              textShadow: '0 0 5px rgba(0,0,255,0.3)'
+            }}>
+              {currentSectionData.title || section.name?.toUpperCase()}
+            </h2>
+            {currentSectionData.subtitle && (
+              <div style={{
+                color: '#B0B0B0',
+                fontSize: '1rem',
+                fontWeight: '600',
+                marginTop: '5px',
+                textShadow: '0 0 3px rgba(0,0,255,0.2)'
+              }}>
+                {currentSectionData.subtitle}
+              </div>
+            )}
+          </div>
+          <button onClick={onReset} style={{
+            background: 'linear-gradient(145deg, #E0E0E0 0%, #C0C0C0 50%, #A0A0A0 100%)',
+            border: '2px solid #808080',
+            borderRadius: '6px',
+            width: '40px',
+            height: '40px',
+            color: '#D0D0D0',
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
+            textShadow: '0 0 3px rgba(0,0,255,0.2)',
+            transition: 'all 0.3s ease'
+          }}>
+            ✕
+          </button>
         </div>
         
-        <button onClick={onReset} className="cyber-button primary">
-          <span className="button-text">RETURN TO CONTAINER</span>
-          <span className="button-glitch" data-text="RETURN TO CONTAINER">RETURN TO CONTAINER</span>
-        </button>
+        <div style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: '20px',
+          background: 'linear-gradient(145deg, #D0D0D0 0%, #B8B8B8 100%)'
+        }}>
+          {sectionSpecificContent}
+        </div>
         
-        <div className="footer-status">
-          <div className="status-light" />
+        <div style={{
+          background: 'linear-gradient(145deg, #D8D8D8 0%, #C0C0C0 50%, #A8A8A8 100%)',
+          borderTop: '3px solid #808080',
+          padding: '15px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)'
+        }}>
+          <div style={{
+            color: '#B0B0B0',
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            textShadow: '0 0 3px rgba(0,0,255,0.2)'
+          }}>
+            <span>SECTOR: </span>
+            <span style={{ color: '#D0D0D0' }}>{section.id?.toUpperCase()}</span>
+          </div>
+          
+          <button onClick={onReset} style={{
+            background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 50%, #B8B8B8 100%)',
+            border: '3px solid #808080',
+            borderRadius: '8px',
+            padding: '12px 25px',
+            color: '#D0D0D0',
+            fontWeight: 'bold',
+            fontSize: '1rem',
+            letterSpacing: '1px',
+            textShadow: '0 0 5px rgba(0,0,255,0.3)',
+            boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}>
+            RETURN TO CONTAINER
+          </button>
+          
+          <div style={{
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #00B7EB, #000)',
+            boxShadow: '0 0 10px rgba(0,183,235,0.5)'
+          }} />
         </div>
       </div>
     </div>
