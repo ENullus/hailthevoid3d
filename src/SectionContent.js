@@ -769,7 +769,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           fontSize: '1rem',
           textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF',
           marginBottom: '20px'
-        }}>
+        }>
           Your artistic transmissions must resonate with the void's frequency.
           Ensure dimensional compatibility before upload.
         </p>
@@ -856,7 +856,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           fontSize: '1rem',
           textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF',
           marginBottom: '20px'
-        }>
+        }}>
           Establish quantum entanglement. Your transmission will echo through the void.
         </p>
 
