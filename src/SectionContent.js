@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const sectionContents = {
   about: {
@@ -132,7 +132,6 @@ function useCMSContent(sectionId) {
 
 function SectionContent({ section, onReset, onMediaPlayingChange }) {
   const { content: cmsContent, loading: cmsLoading, error: cmsError } = useCMSContent(section?.id);
-  const videoRef = useRef(null);
 
   useEffect(() => {
     if (typeof onMediaPlayingChange === 'function') {
@@ -205,7 +204,6 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           }} />
 
           <MediaElement
-            ref={type === 'video' ? videoRef : null}
             controls
             onPlay={() => onMediaPlayingChange(true)}
             onPause={() => onMediaPlayingChange(false)}
@@ -230,7 +228,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           marginTop: '10px',
           color: '#1A1A1A',
           fontSize: '0.9rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
         }}>
           <span style={{ fontWeight: 'bold' }}>SOURCE:</span>
           <span style={{ marginLeft: '5px' }}>{title || src.split('/').pop()}</span>
@@ -260,7 +258,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           <p style={{
             color: '#1A1A1A',
             fontSize: '1rem',
-            textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+            textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
           }}>
             ACCESSING {type.toUpperCase()} MATRIX...
           </p>
@@ -280,7 +278,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           <p style={{
             color: '#1A1A1A',
             fontSize: '1rem',
-            textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+            textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
           }}>
             Error loading content: {cmsError}
           </p>
@@ -312,7 +310,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               fontSize: '1.1rem',
               marginBottom: '10px',
               color: '#1A1A1A',
-              textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+              fontWeight: 'bold',
+              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
             }}>
               {item.title || 'Untitled'}
             </div>
@@ -320,9 +319,9 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             {item.artist && (
               <div style={{
                 fontSize: '0.9rem',
-                color: '#1A1A1A',
+                color: '#2C2C2C',
                 marginBottom: '8px',
-                textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+                textShadow: '0 1px 1px rgba(255,255,255,0.8)'
               }}>
                 by {item.artist}
               </div>
@@ -331,9 +330,9 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             {item.description && (
               <div style={{
                 fontSize: '0.9rem',
-                color: '#1A1A1A',
+                color: '#2C2C2C',
                 marginBottom: '15px',
-                textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+                textShadow: '0 1px 1px rgba(255,255,255,0.8)'
               }}>
                 {item.description}
               </div>
@@ -376,9 +375,9 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                   <div style={{ marginTop: '10px' }}>
                     <p style={{
                       fontSize: '0.8rem',
-                      color: '#1A1A1A',
+                      color: '#2C2C2C',
                       marginBottom: '10px',
-                      textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+                      textShadow: '0 1px 1px rgba(255,255,255,0.8)'
                     }}>
                       Additional tracks:
                     </p>
@@ -412,9 +411,9 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                   <div style={{ marginTop: '10px' }}>
                     <p style={{
                       fontSize: '0.8rem',
-                      color: '#1A1A1A',
+                      color: '#2C2C2C',
                       marginBottom: '10px',
-                      textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+                      textShadow: '0 1px 1px rgba(255,255,255,0.8)'
                     }}>
                       Additional videos:
                     </p>
@@ -490,8 +489,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               flexWrap: 'wrap',
               gap: '10px',
               fontSize: '0.8rem',
-              color: '#1A1A1A',
-              textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+              color: '#2C2C2C',
+              textShadow: '0 1px 1px rgba(255,255,255,0.8)'
             }}>
               {item.genre && <span># {item.genre}</span>}
               {item.duration && <span>{item.duration}</span>}
@@ -508,10 +507,11 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               }}>
                 {item.bandcamp_url && (
                   <a href={item.bandcamp_url} target="_blank" rel="noopener noreferrer" style={{
-                    color: '#00B7EB',
+                    color: '#0066CC',
                     fontSize: '0.8rem',
                     textDecoration: 'none',
-                    textShadow: '0 0 5px rgba(0,183,235,0.3)',
+                    fontWeight: 'bold',
+                    textShadow: '0 1px 1px rgba(255,255,255,0.8)',
                     transition: 'color 0.3s ease'
                   }}>
                     BANDCAMP →
@@ -519,10 +519,11 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                 )}
                 {item.soundcloud_url && (
                   <a href={item.soundcloud_url} target="_blank" rel="noopener noreferrer" style={{
-                    color: '#00B7EB',
+                    color: '#0066CC',
                     fontSize: '0.8rem',
                     textDecoration: 'none',
-                    textShadow: '0 0 5px rgba(0,183,235,0.3)',
+                    fontWeight: 'bold',
+                    textShadow: '0 1px 1px rgba(255,255,255,0.8)',
                     transition: 'color 0.3s ease'
                   }}>
                     SOUNDCLOUD →
@@ -530,10 +531,11 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                 )}
                 {item.spotify_url && (
                   <a href={item.spotify_url} target="_blank" rel="noopener noreferrer" style={{
-                    color: '#00B7EB',
+                    color: '#0066CC',
                     fontSize: '0.8rem',
                     textDecoration: 'none',
-                    textShadow: '0 0 5px rgba(0,183,235,0.3)',
+                    fontWeight: 'bold',
+                    textShadow: '0 1px 1px rgba(255,255,255,0.8)',
                     transition: 'color 0.3s ease'
                   }}>
                     SPOTIFY →
@@ -541,10 +543,11 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                 )}
                 {item.artist_website && (
                   <a href={item.artist_website} target="_blank" rel="noopener noreferrer" style={{
-                    color: '#00B7EB',
+                    color: '#0066CC',
                     fontSize: '0.8rem',
                     textDecoration: 'none',
-                    textShadow: '0 0 5px rgba(0,183,235,0.3)',
+                    fontWeight: 'bold',
+                    textShadow: '0 1px 1px rgba(255,255,255,0.8)',
                     transition: 'color 0.3s ease'
                   }}>
                     ARTIST SITE →
@@ -569,9 +572,10 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
       }}>
         <div style={{
-          color: '#1A1A1A',
+          color: '#2C2C2C',
           fontSize: '0.9rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)',
+          marginBottom: '15px'
         }}>
           ACCESSING CONSCIOUSNESS MATRIX...
         </div>
@@ -579,7 +583,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           color: '#1A1A1A',
           lineHeight: '1.6',
           fontSize: '1rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
         }}>
           <p>{currentSectionData.content}</p>
         </div>
@@ -596,9 +600,9 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             marginRight: '10px'
           }} />
           <span style={{
-            color: '#1A1A1A',
+            color: '#2C2C2C',
             fontSize: '0.9rem',
-            textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+            textShadow: '0 1px 1px rgba(255,255,255,0.8)'
           }}>
             NEURAL LINK ESTABLISHED
           </span>
@@ -611,11 +615,11 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         padding: '20px'
       }}>
         <div style={{
-          color: '#1A1A1A',
+          color: '#2C2C2C',
           fontSize: '0.9rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
         }}>
-          FREQUENCY MODULATION: <span style={{ color: '#00B7EB' }}>ACTIVE</span>
+          FREQUENCY MODULATION: <span style={{ color: '#0066CC' }}>ACTIVE</span>
         </div>
 
         <div style={{
@@ -655,11 +659,11 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         padding: '20px'
       }}>
         <div style={{
-          color: '#1A1A1A',
+          color: '#2C2C2C',
           fontSize: '0.9rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
         }}>
-          VISUAL CORTEX INTERFACE: <span style={{ color: '#00B7EB' }}>SYNCED</span>
+          VISUAL CORTEX INTERFACE: <span style={{ color: '#0066CC' }}>SYNCED</span>
         </div>
 
         {renderContentGrid(cmsContent, 'disruptions')}
@@ -671,20 +675,20 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         padding: '20px'
       }}>
         <div style={{
-          color: '#1A1A1A',
+          color: '#2C2C2C',
           fontSize: '0.9rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
         }}>
-          TEMPORAL STREAM: <span style={{ color: '#00B7EB' }}>BUFFERING</span>
+          TEMPORAL STREAM: <span style={{ color: '#0066CC' }}>BUFFERING</span>
         </div>
 
         <div style={{
           display: 'flex',
           gap: '20px',
           marginBottom: '20px',
-          color: '#1A1A1A',
+          color: '#2C2C2C',
           fontSize: '0.9rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
         }}>
           <div>
             <span style={{ fontWeight: 'bold' }}>BITRATE:</span>
@@ -696,7 +700,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           </div>
           <div>
             <span style={{ fontWeight: 'bold' }}>SYNC:</span>
-            <span style={{ color: '#00B7EB', animation: 'pulse 1.5s infinite' }}>LIVE</span>
+            <span style={{ color: '#0066CC', animation: 'pulse 1.5s infinite' }}>LIVE</span>
           </div>
         </div>
 
@@ -711,11 +715,11 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         padding: '20px'
       }}>
         <div style={{
-          color: '#1A1A1A',
+          color: '#2C2C2C',
           fontSize: '0.9rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
         }}>
-          SUBMISSION PROTOCOL: <span style={{ color: '#00B7EB' }}>READY</span>
+          SUBMISSION PROTOCOL: <span style={{ color: '#0066CC' }}>READY</span>
         </div>
 
         <div style={{
@@ -730,20 +734,20 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             display: 'flex',
             flexDirection: 'column',
             gap: '5px',
-            color: '#1A1A1A',
+            color: '#2C2C2C',
             fontSize: '0.9rem',
-            textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+            textShadow: '0 1px 1px rgba(255,255,255,0.8)'
           }}>
             <div>
-              <span style={{ marginRight: '10px', color: '#00B7EB' }}>001</span>
+              <span style={{ marginRight: '10px', color: '#0066CC' }}>001</span>
               <span>PREPARE_DIGITAL_CONSCIOUSNESS</span>
             </div>
             <div>
-              <span style={{ marginRight: '10px', color: '#00B7EB' }}>002</span>
+              <span style={{ marginRight: '10px', color: '#0066CC' }}>002</span>
               <span>ALIGN_CREATIVE_FREQUENCY</span>
             </div>
             <div>
-              <span style={{ marginRight: '10px', color: '#00B7EB' }}>003</span>
+              <span style={{ marginRight: '10px', color: '#0066CC' }}>003</span>
               <span>INITIATE_TRANSMISSION</span>
             </div>
           </div>
@@ -756,7 +760,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             <h3 style={{
               color: '#1A1A1A',
               marginBottom: '15px',
-              textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
             }}>
               Recent Submissions:
             </h3>
@@ -767,9 +771,9 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         <p style={{
           color: '#1A1A1A',
           fontSize: '1rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF',
+          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
           marginBottom: '20px'
-        }>
+        }}>
           Your artistic transmissions must resonate with the void's frequency.
           Ensure dimensional compatibility before upload.
         </p>
@@ -784,7 +788,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           textDecoration: 'none',
           fontWeight: 'bold',
           fontSize: '1rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF',
+          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
           boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
           transition: 'all 0.3s ease'
         }}>
@@ -792,10 +796,10 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         </a>
 
         <div style={{
-          color: '#1A1A1A',
+          color: '#2C2C2C',
           fontSize: '0.9rem',
           marginTop: '15px',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
         }}>
           ⚠ CAUTION: Email client will breach current dimension
         </div>
@@ -807,11 +811,11 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         padding: '20px'
       }}>
         <div style={{
-          color: '#1A1A1A',
+          color: '#2C2C2C',
           fontSize: '0.9rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
         }}>
-          COMMUNICATION ARRAY: <span style={{ color: '#00B7EB' }}>ONLINE</span>
+          COMMUNICATION ARRAY: <span style={{ color: '#0066CC' }}>ONLINE</span>
         </div>
 
         <div style={{
@@ -854,7 +858,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         <p style={{
           color: '#1A1A1A',
           fontSize: '1rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF',
+          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
           marginBottom: '20px'
         }}>
           Establish quantum entanglement. Your transmission will echo through the void.
@@ -867,7 +871,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               color: '#1A1A1A',
               fontWeight: 'bold',
               marginBottom: '5px',
-              textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
             }}>
               ENTITY_DESIGNATION
             </label>
@@ -906,7 +910,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               color: '#1A1A1A',
               fontWeight: 'bold',
               marginBottom: '5px',
-              textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
             }}>
               RETURN_FREQUENCY
             </label>
@@ -945,7 +949,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               color: '#1A1A1A',
               fontWeight: 'bold',
               marginBottom: '5px',
-              textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
             }}>
               DATA_PACKET
             </label>
@@ -989,7 +993,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               color: '#1A1A1A',
               fontWeight: 'bold',
               fontSize: '1rem',
-              textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF',
+              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
               boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
               cursor: 'pointer',
               transition: 'all 0.3s ease'
@@ -1003,9 +1007,9 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           display: 'flex',
           alignItems: 'center',
           marginTop: '15px',
-          color: '#1A1A1A',
+          color: '#2C2C2C',
           fontSize: '0.9rem',
-          textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
         }}>
           <div style={{ marginRight: '10px' }}>⟨⟩</div>
           <span>Third-party quantum relay active</span>
@@ -1015,19 +1019,81 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
   }
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      background: 'rgba(0,0,0,0.1)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      pointerEvents: 'auto'
-    }}>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'rgba(0,0,0,0.1)',
+        backdropFilter: 'blur(2px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        pointerEvents: 'auto',
+        animation: 'materialize 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards'
+      }}
+    >
+      <style>{`
+        @keyframes materialize {
+          0% { 
+            opacity: 0; 
+            transform: scale(0.95);
+            filter: blur(4px);
+          }
+          100% { 
+            opacity: 1; 
+            transform: scale(1);
+            filter: blur(0);
+          }
+        }
+        
+        @keyframes slideInFromLeft {
+          0% { 
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          100% { 
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes fadeUpIn {
+          0% { 
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          100% { 
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes slideInFromRight {
+          0% { 
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          100% { 
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
+        }
+        
+        @keyframes scan {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100vw); }
+        }
+      `}</style>
+      
       <div style={{
         width: '90%',
         maxWidth: '800px',
@@ -1047,7 +1113,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)'
+          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
+          animation: 'slideInFromLeft 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.1s backwards'
         }}>
           <div>
             <h2 style={{
@@ -1056,17 +1123,17 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               fontSize: '1.8rem',
               fontWeight: 'bold',
               letterSpacing: '2px',
-              textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+              textShadow: '0 2px 4px rgba(255,255,255,0.8), 0 -1px 2px rgba(0,0,0,0.3)'
             }}>
               {currentSectionData.title || section.name?.toUpperCase()}
             </h2>
             {currentSectionData.subtitle && (
               <div style={{
-                color: '#1A1A1A',
+                color: '#2C2C2C',
                 fontSize: '1rem',
                 fontWeight: '600',
                 marginTop: '5px',
-                textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+                textShadow: '0 1px 2px rgba(255,255,255,0.8)'
               }}>
                 {currentSectionData.subtitle}
               </div>
@@ -1083,7 +1150,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             fontWeight: 'bold',
             cursor: 'pointer',
             boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
-            textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF',
+            textShadow: '0 1px 2px rgba(255,255,255,0.8)',
             transition: 'all 0.3s ease'
           }}>
             ✕
@@ -1094,7 +1161,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           flex: 1,
           overflow: 'auto',
           padding: '20px',
-          background: 'linear-gradient(145deg, #D0D0D0 0%, #B8B8B8 100%)'
+          background: 'linear-gradient(145deg, #D0D0D0 0%, #B8B8B8 100%)',
+          animation: 'fadeUpIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.2s backwards'
         }}>
           {sectionSpecificContent}
         </div>
@@ -1106,13 +1174,14 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)'
+          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
+          animation: 'slideInFromRight 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.3s backwards'
         }}>
           <div style={{
-            color: '#1A1A1A',
+            color: '#2C2C2C',
             fontSize: '0.9rem',
             fontWeight: 'bold',
-            textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF'
+            textShadow: '0 1px 2px rgba(255,255,255,0.8)'
           }}>
             <span>SECTOR: </span>
             <span style={{ color: '#1A1A1A' }}>{section.id?.toUpperCase()}</span>
@@ -1127,7 +1196,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             fontWeight: 'bold',
             fontSize: '1rem',
             letterSpacing: '1px',
-            textShadow: '0 0 5px #0000FF, 0 0 10px #0000FF',
+            textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.3)',
             boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
             cursor: 'pointer',
             transition: 'all 0.3s ease'
@@ -1139,8 +1208,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             width: '12px',
             height: '12px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, #00B7EB, #000)',
-            boxShadow: '0 0 10px rgba(0,183,235,0.5)'
+            background: 'linear-gradient(45deg, #32CD32, #90EE90)',
+            boxShadow: '0 0 10px rgba(50, 205, 50, 0.5), inset 0 1px 2px rgba(255,255,255,0.3)'
           }} />
         </div>
       </div>
@@ -1148,4 +1217,4 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
   );
 }
 
-export default SectionContent;
+export default SectionContent
