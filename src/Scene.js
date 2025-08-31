@@ -518,6 +518,24 @@ export default function Scene() {
 
   return (
     <>
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          opacity: symbolOpacity,
+          transition: 'opacity 2s ease-out',
+          pointerEvents: 'auto',
+          zIndex: 1001,
+        }}
+      >
+        {/* Replace with your symbol (e.g., an SVG or image) */}
+        <svg width="100" height="100" viewBox="0 0 100 100" style={{ pointerEvents: 'none' }}>
+          <circle cx="50" cy="50" r="40" fill="#00B7EB" />
+          <path d="M30 70 L70 30" stroke="#FFFFFF" strokeWidth="5" />
+        </svg>
+      </div>
       <Canvas
         camera={{ position: cameraSettings.position, fov: cameraSettings.fov }}
         style={{
@@ -559,3 +577,116 @@ export default function Scene() {
                 key={i}
                 position={[
                   darkMatterProgress * activeSection.targetPos[0] * (0.7 - i * 0.1),
+                  darkMatterProgress * activeSection.targetPos[1] * (0.7 - i * 0.1),
+                  darkMatterProgress * activeSection.targetPos[2] * (0.7 - i * 0.1)
+                ]}
+                opacity={0.3 - i * 0.05}
+                scale={0.5 - i * 0.08}
+                delay={i * 0.3}
+              />
+            ))}
+          </>
+        )}
+
+        {voidRipples.map(ripple => (
+          <MetallicRipple
+            key={ripple.id}
+            origin={ripple.origin}
+            scale={ripple.scale}
+            opacity={ripple.opacity}
+          />
+        ))}
+
+        {realityTears.map(tear => (
+          <MetallicTear
+            key={tear.id}
+            startPos={tear.startPos}
+            endPos={tear.endPos}
+            progress={tear.progress}
+          />
+        ))}
+
+        {darkMatterVisible && activeSection && <CameraController darkMatterProgress={darkMatterProgress} targetPos={activeSection.targetPos} />}
+        <OrbitControls
+          enablePan={false}
+          enabled={!darkMatterVisible}
+          enableDamping={true}
+          dampingFactor={0.05}
+          maxDistance={isMobile ? 8 : 15}
+          minDistance={isMobile ? 2 : 3}
+        />
+      </Canvas>
+
+      <SectionContent section={menuVisible ? activeSection : null} onReset={handleReset} onMediaPlayingChange={handleMediaPlayingChange} />
+
+      {performanceSettings.enableBinaural && (
+        <audio ref={binauralAudioRef} loop preload="auto" src="/audio/binaural_loop.mp3" />
+      )}
+
+      {showWarning && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          border: '4px solid #808080',
+          borderRadius: '12px',
+          padding: '35px',
+          textAlign: 'center',
+          color: '#1A1A1A',
+          fontFamily: 'monospace',
+          fontSize: '18px',
+          fontWeight: 'bold',
+          zIndex: 10000,
+          boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)'
+        }}>
+          <div style={{
+            marginBottom: '20px',
+            color: '#2C2C2C',
+            textShadow: '0 0 5px rgba(0,0,255,0.3)'
+          }}>
+            ⚠ INITIATING VOID GLIMPSE ⚠
+          </div>
+          <div style={{
+            color: '#1A1A1A',
+            textShadow: '0 0 5px rgba(0,0,255,0.3)'
+          }}>
+            Dimensional breach in {timeLeft} seconds...
+          </div>
+          <div style={{
+            fontSize: '14px',
+            marginTop: '15px',
+            color: '#4A4A4A',
+            fontStyle: 'italic',
+            textShadow: '0 0 5px rgba(0,0,255,0.3)'
+          }}>
+            Move to cancel
+          </div>
+        </div>
+      )}
+
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{
+          position: 'fixed',
+          top: 10,
+          left: 10,
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          border: '2px solid #808080',
+          borderRadius: '8px',
+          padding: '10px',
+          color: '#2C2C2C',
+          fontFamily: 'monospace',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          zIndex: 9999,
+          boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
+          textShadow: '0 0 5px rgba(0,0,255,0.3)'
+        }}>
+          Device: {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | Touch: {isTouch ? 'Yes' : 'No'}
+        </div>
+      )}
+    </>
+  );
+}
