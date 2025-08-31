@@ -1,50 +1,99 @@
-// src/Scene.js - Sandy Holy Room Aesthetic
+// src/Scene.js - Ancient Desert Sanctuary
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, useTexture } from '@react-three/drei';
+import { Canvas, useThree, useFrame, extend } from '@react-three/fiber';
+import { OrbitControls, useTexture, Plane } from '@react-three/drei';
 import * as THREE from 'three';
 import SectionContent from './SectionContent';
 import QuantumVisualization from './QuantumVisualization';
+
+// Volumetric Light Shader
+const VolumetricLightShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    lightPosition: { value: new THREE.Vector2(0.5, 0.5) },
+    exposure: { value: 0.25 },
+    decay: { value: 0.95 },
+    density: { value: 0.8 },
+    weight: { value: 0.4 },
+    samples: { value: 50 }
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    varying vec2 vUv;
+    uniform sampler2D tDiffuse;
+    uniform vec2 lightPosition;
+    uniform float exposure;
+    uniform float decay;
+    uniform float density;
+    uniform float weight;
+    uniform int samples;
+    
+    void main() {
+      vec2 texCoord = vUv;
+      vec2 deltaTextCoord = texCoord - lightPosition;
+      deltaTextCoord *= 1.0 / float(samples) * density;
+      vec4 color = texture2D(tDiffuse, texCoord);
+      float illuminationDecay = 1.0;
+      
+      for(int i = 0; i < 50; i++) {
+        if(i >= samples) break;
+        texCoord -= deltaTextCoord;
+        vec4 sample = texture2D(tDiffuse, texCoord);
+        sample *= illuminationDecay * weight;
+        color += sample;
+        illuminationDecay *= decay;
+      }
+      
+      gl_FragColor = color * exposure;
+    }
+  `
+};
 
 const sections = [
   {
     id: 'music',
     name: "FREQUENCIES",
-    materialProps: { color: "#8B7355", metalness: 0.9, roughness: 0.1, emissive: "#D2B48C" },
+    materialProps: { color: "#F5F5DC", metalness: 0.9, roughness: 0.1, emissive: "#FFF8DC" },
     targetPos: [4, 0, 0]
   },
   {
     id: 'art',
     name: "DISRUPTIONS",
-    materialProps: { color: "#A0856B", metalness: 0.9, roughness: 0.1, emissive: "#DEB887" },
+    materialProps: { color: "#FFFAF0", metalness: 0.9, roughness: 0.1, emissive: "#FDF5E6" },
     targetPos: [-4, 0, 0]
   },
   {
     id: 'about',
     name: "HAIL THE VOID",
-    materialProps: { color: "#9C8A73", metalness: 0.9, roughness: 0.1, emissive: "#F5DEB3" },
+    materialProps: { color: "#FAF0E6", metalness: 0.9, roughness: 0.1, emissive: "#FFEFD5" },
     targetPos: [0, 4, 0]
   },
   {
     id: 'submit',
     name: "SHADOWS",
-    materialProps: { color: "#8E7B68", metalness: 0.9, roughness: 0.1, emissive: "#D2B48C" },
+    materialProps: { color: "#FDF5E6", metalness: 0.9, roughness: 0.1, emissive: "#F5F5DC" },
     targetPos: [0, -4, 0]
   },
   {
     id: 'contact',
     name: "COLLAPSE",
-    materialProps: { color: "#967D6A", metalness: 0.9, roughness: 0.1, emissive: "#DEB887" },
+    materialProps: { color: "#FAEBD7", metalness: 0.9, roughness: 0.1, emissive: "#FFFAF0" },
     targetPos: [0, 0, 4]
   },
   {
     id: 'video',
     name: "Video Streams",
     materialProps: {
-      color: "#A5926F", 
+      color: "#F8F8FF", 
       metalness: 0.9,
       roughness: 0.05, 
-      emissive: "#F5DEB3"
+      emissive: "#FFF8DC"
     },
     targetPos: [0, 0, -4],
     disabled: false
@@ -79,7 +128,7 @@ function useDeviceDetection() {
   return device;
 }
 
-// Auto-preview hook (once per visit after 2 minutes)
+// Auto-preview hook
 function useAutoPreview() {
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -88,25 +137,21 @@ function useAutoPreview() {
   const countdownRef = useRef(null);
   
   useEffect(() => {
-    // Check if preview already happened this session
     const previewHappened = sessionStorage.getItem('voidPreviewShown');
     if (previewHappened) return;
     
-    const TOTAL_TIME = 2 * 60 * 1000; // 2 minutes total
-    const WARNING_TIME = 10 * 1000; // Show warning 10 seconds before
-    const PREVIEW_DURATION = 30; // 30 seconds
-    
+    const TOTAL_TIME = 2 * 60 * 1000;
+    const WARNING_TIME = 10 * 1000;
+    const PREVIEW_DURATION = 30;
     const STATIC_SITE_URL = 'https://hailthevoid.org';
     
     function schedulePreview() {
-      // Schedule warning
       warningTimerRef.current = setTimeout(() => {
         setShowWarning(true);
         setTimeLeft(10);
         startCountdown();
       }, TOTAL_TIME - WARNING_TIME);
       
-      // Schedule preview
       timerRef.current = setTimeout(() => {
         sessionStorage.setItem('voidPreviewShown', 'true');
         const currentUrl = window.location.href.split('?')[0];
@@ -127,7 +172,6 @@ function useAutoPreview() {
       }, 1000);
     }
     
-    // Start the timer
     schedulePreview();
     
     return () => {
@@ -140,6 +184,155 @@ function useAutoPreview() {
   return { showWarning, timeLeft };
 }
 
+// Ancient Stone Walls
+function SanctuaryWalls() {
+  const wallRefs = useRef([]);
+  
+  const wallGeometry = useMemo(() => new THREE.BoxGeometry(0.5, 8, 12), []);
+  const floorGeometry = useMemo(() => new THREE.PlaneGeometry(20, 20), []);
+  
+  const stoneMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: "#8B7355",
+    metalness: 0.1,
+    roughness: 0.9,
+    normalScale: new THREE.Vector2(2, 2)
+  }), []);
+  
+  const floorMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: "#A0866B",
+    metalness: 0.05,
+    roughness: 0.95
+  }), []);
+
+  return (
+    <group>
+      {/* Floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -4, 0]} material={floorMaterial}>
+        <primitive object={floorGeometry} />
+      </mesh>
+      
+      {/* Walls with openings for light */}
+      <mesh position={[-10, 0, 0]} material={stoneMaterial}>
+        <primitive object={wallGeometry} />
+      </mesh>
+      <mesh position={[10, 0, 0]} material={stoneMaterial}>
+        <primitive object={wallGeometry} />
+      </mesh>
+      
+      {/* Back wall with opening */}
+      <mesh position={[0, 0, -6]} rotation={[0, Math.PI / 2, 0]} material={stoneMaterial}>
+        <boxGeometry args={[8, 8, 0.5]} />
+      </mesh>
+      
+      {/* Partial front walls creating openings */}
+      <mesh position={[-3, 0, 6]} rotation={[0, Math.PI / 2, 0]} material={stoneMaterial}>
+        <boxGeometry args={[4, 8, 0.5]} />
+      </mesh>
+      <mesh position={[3, 0, 6]} rotation={[0, Math.PI / 2, 0]} material={stoneMaterial}>
+        <boxGeometry args={[4, 8, 0.5]} />
+      </mesh>
+      
+      {/* Ceiling with openings */}
+      <mesh position={[-4, 4, 0]} rotation={[0, 0, Math.PI / 2]} material={stoneMaterial}>
+        <boxGeometry args={[0.5, 8, 12]} />
+      </mesh>
+      <mesh position={[4, 4, 0]} rotation={[0, 0, Math.PI / 2]} material={stoneMaterial}>
+        <boxGeometry args={[0.5, 8, 12]} />
+      </mesh>
+    </group>
+  );
+}
+
+// Volumetric Light Beams
+function VolumetricLightBeam({ position, direction, intensity }) {
+  const meshRef = useRef();
+  const time = useRef(0);
+  
+  useFrame((state, delta) => {
+    time.current += delta;
+    if (meshRef.current) {
+      // Subtle movement to simulate atmospheric changes
+      meshRef.current.material.opacity = intensity * (0.8 + Math.sin(time.current * 0.5) * 0.2);
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} position={position} rotation={direction}>
+      <coneGeometry args={[2, 8, 8, 1, true]} />
+      <meshBasicMaterial
+        color="#FFF8DC"
+        transparent={true}
+        opacity={intensity}
+        side={THREE.DoubleSide}
+        blending={THREE.AdditiveBlending}
+      />
+    </mesh>
+  );
+}
+
+// Floating Dust Particles
+function DustParticles({ count = 50 }) {
+  const pointsRef = useRef();
+  const velocities = useRef([]);
+  
+  const positions = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    velocities.current = [];
+    
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 15;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 8;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 12;
+      
+      velocities.current.push({
+        x: (Math.random() - 0.5) * 0.01,
+        y: Math.random() * 0.005,
+        z: (Math.random() - 0.5) * 0.01
+      });
+    }
+    
+    return pos;
+  }, [count]);
+  
+  useFrame(() => {
+    if (pointsRef.current) {
+      const positions = pointsRef.current.geometry.attributes.position.array;
+      
+      for (let i = 0; i < count; i++) {
+        const vel = velocities.current[i];
+        positions[i * 3] += vel.x;
+        positions[i * 3 + 1] += vel.y;
+        positions[i * 3 + 2] += vel.z;
+        
+        // Boundary checks - keep particles in sanctuary
+        if (positions[i * 3] > 8) positions[i * 3] = -8;
+        if (positions[i * 3] < -8) positions[i * 3] = 8;
+        if (positions[i * 3 + 1] > 4) positions[i * 3 + 1] = -4;
+        if (positions[i * 3 + 1] < -4) positions[i * 3 + 1] = 4;
+        if (positions[i * 3 + 2] > 6) positions[i * 3 + 2] = -6;
+        if (positions[i * 3 + 2] < -6) positions[i * 3 + 2] = 6;
+      }
+      
+      pointsRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.02}
+        color="#FFF8DC"
+        transparent={true}
+        opacity={0.6}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
+  );
+}
+
 // Sacred Geometry Patterns
 function SacredGeometry({ position, scale, opacity }) {
   const meshRef = useRef();
@@ -150,11 +343,8 @@ function SacredGeometry({ position, scale, opacity }) {
       time.current += delta;
       const t = time.current;
       
-      // Gentle pulsing
       meshRef.current.scale.setScalar(scale * (1 + Math.sin(t * 1.5) * 0.1));
       meshRef.current.rotation.z = t * 0.3;
-      
-      // Subtle opacity pulse
       meshRef.current.material.opacity = opacity * (0.8 + Math.sin(t * 2) * 0.2);
     }
   });
@@ -163,7 +353,7 @@ function SacredGeometry({ position, scale, opacity }) {
     <mesh ref={meshRef} position={position}>
       <ringGeometry args={[1.5, 2, 6]} />
       <meshBasicMaterial
-        color="#F5DEB3"
+        color="#FFF8DC"
         transparent={true}
         opacity={opacity}
         side={THREE.DoubleSide}
@@ -183,16 +373,12 @@ function EnergyOrbTrail({ position, opacity, scale, delay }) {
       time.current += delta;
       const t = time.current;
       
-      // Floating motion
       meshRef.current.position.x = position[0] + Math.sin(t * 0.5) * 0.5;
       meshRef.current.position.y = position[1] + Math.cos(t * 0.7) * 0.3;
       meshRef.current.position.z = position[2] + Math.sin(t * 0.3) * 0.4;
       
-      // Pulsing scale
       const pulseScale = scale * (1 + Math.sin(t * 2) * 0.2);
       meshRef.current.scale.setScalar(pulseScale);
-      
-      // Fade based on distance
       meshRef.current.material.opacity = opacity * (0.7 + Math.sin(t) * 0.3);
     }
   });
@@ -201,12 +387,12 @@ function EnergyOrbTrail({ position, opacity, scale, delay }) {
     <mesh ref={meshRef} position={position}>
       <sphereGeometry args={[0.3, 16, 16]} />
       <meshPhysicalMaterial
-        color="#F5DEB3"
+        color="#FFF8DC"
         metalness={0.6}
         roughness={0.3}
         transparent={true}
         opacity={opacity}
-        emissive="#DEB887"
+        emissive="#F0E68C"
         emissiveIntensity={0.5}
       />
     </mesh>
@@ -223,14 +409,10 @@ function EnlightenedRipple({ origin, scale, opacity }) {
       time.current += delta;
       const t = time.current;
       
-      // Expand outward
       meshRef.current.scale.setScalar(scale * (1 + t * 2));
-      
-      // Fade gracefully
       meshRef.current.material.opacity = opacity * Math.max(0, 1 - t * 0.5);
       meshRef.current.rotation.z = t * 1.5;
       
-      // Gentle warping effect
       const positions = meshRef.current.geometry.attributes.position.array;
       for (let i = 0; i < positions.length; i += 3) {
         positions[i + 2] = Math.sin(positions[i] * 8 + t * 3) * 0.05;
@@ -243,7 +425,7 @@ function EnlightenedRipple({ origin, scale, opacity }) {
     <mesh ref={meshRef} position={origin}>
       <ringGeometry args={[0.5, 0.8, 64]} />
       <meshBasicMaterial 
-        color="#F5DEB3" 
+        color="#FFF8DC" 
         transparent={true} 
         opacity={opacity}
         side={THREE.DoubleSide}
@@ -253,7 +435,7 @@ function EnlightenedRipple({ origin, scale, opacity }) {
   );
 }
 
-// Energy Flow Effect - like sacred energy streams
+// Energy Flow Effect
 function EnergyFlow({ startPos, endPos, progress }) {
   const meshRef = useRef();
   
@@ -287,7 +469,7 @@ function EnergyFlow({ startPos, endPos, progress }) {
   return (
     <line ref={meshRef}>
       <bufferGeometry />
-      <lineBasicMaterial color="#F5DEB3" linewidth={3} transparent opacity={0.8} />
+      <lineBasicMaterial color="#FFF8DC" linewidth={3} transparent opacity={0.8} />
     </line>
   );
 }
@@ -311,11 +493,19 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
         opacity: opacity,
         ior: 1.33,
         thickness: 1.0,
-        emissive: new THREE.Color(props.emissive || '#D2B48C'),
-        emissiveIntensity: 0.3, // Increased for brighter glow
+        emissive: new THREE.Color(props.emissive || '#FFF8DC'),
+        emissiveIntensity: 0.4,
       });
     });
   }, [opacity, iceNormalMap, iceRoughnessMap]);
+
+  useFrame(() => {
+    if (meshRef.current && visible) {
+      // Gentle floating motion
+      meshRef.current.position.y = Math.sin(Date.now() * 0.001) * 0.1;
+      meshRef.current.rotation.y += 0.005;
+    }
+  });
 
   const handleClick = (event) => {
     if (!visible) return;
@@ -329,12 +519,18 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
       }
     }
   };
-  return ( <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0,0,0]} visible={visible}> <boxGeometry args={[2,2,2]} /> </mesh> );
+  
+  return ( 
+    <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0,0,0]} visible={visible}> 
+      <boxGeometry args={[2,2,2]} /> 
+    </mesh> 
+  );
 }
 
 function Fragment({ position, velocity, scale, color }) {
   const meshRef = useRef();
   const vel = useRef([...velocity]);
+  
   useFrame((state, delta) => {
     if (meshRef.current) {
       meshRef.current.position.x += vel.current[0] * delta;
@@ -345,7 +541,13 @@ function Fragment({ position, velocity, scale, color }) {
       meshRef.current.scale.multiplyScalar(0.98);
     }
   });
-  return ( <mesh ref={meshRef} position={position} scale={scale}> <boxGeometry args={[1,1,1]} /> <meshBasicMaterial color={color || "#D2B48C"} /> </mesh> );
+  
+  return ( 
+    <mesh ref={meshRef} position={position} scale={scale}> 
+      <boxGeometry args={[1,1,1]} /> 
+      <meshBasicMaterial color={color || "#FFF8DC"} /> 
+    </mesh> 
+  );
 }
 
 function CameraController({ darkMatterProgress, targetPos }) {
@@ -359,29 +561,6 @@ function CameraController({ darkMatterProgress, targetPos }) {
     }
   });
   return null;
-}
-
-// Sandy Atmospheric Background
-function SandyAtmosphere() {
-  const meshRef = useRef();
-  
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.05;
-    }
-  });
-
-  return (
-    <mesh ref={meshRef} scale={50}>
-      <sphereGeometry args={[1, 32, 32]} />
-      <meshBasicMaterial
-        color="#F4E4BC"
-        transparent={true}
-        opacity={0.15}
-        side={THREE.BackSide}
-      />
-    </mesh>
-  );
 }
 
 export default function Scene() {
@@ -408,8 +587,9 @@ export default function Scene() {
     maxTrails: isMobile ? 2 : 5,
     maxRipples: isMobile ? 1 : 3,
     maxGeometry: isMobile ? 2 : 4,
+    maxDustParticles: isMobile ? 30 : 80,
     animationSpeed: isMobile ? 0.5 : 1,
-    enableBinaural: !isMobile // Disable background audio on mobile to save battery
+    enableBinaural: !isMobile
   }), [isMobile]);
 
   // Camera settings based on device
@@ -446,7 +626,6 @@ export default function Scene() {
     if (!cubeVisible || section.disabled) return;
     setCubeOpacity(0);
     
-    // Stop binaural audio for video and music sections and keep it off
     if (section.id === 'video' || section.id === 'music') {
       setBinauralPaused(true);
       if (binauralAudioRef.current) {
@@ -454,7 +633,7 @@ export default function Scene() {
       }
     }
     
-    // Create fragments with sandy colors
+    // Create fragments with off-white colors
     const frags = [];
     for (let i = 0; i < performanceSettings.maxFragments; i++) {
       frags.push({
@@ -537,12 +716,11 @@ export default function Scene() {
   const handleReset = useCallback(() => {
     setMenuVisible(false); 
     setMediaIsPlaying(false);
-    setBinauralPaused(false); // Resume binaural audio
+    setBinauralPaused(false);
     setVoidRipples([]);
     setRealityTears([]);
     setSacredGeometry([]);
     
-    // Resume binaural audio when returning to main menu
     if (binauralAudioRef.current && performanceSettings.enableBinaural) {
       binauralAudioRef.current.play().catch(e => console.error("Error resuming binaural audio:", e));
     }
@@ -604,25 +782,64 @@ export default function Scene() {
           left: 0, 
           width: '100vw', 
           height: '100vh', 
-          background: 'linear-gradient(to bottom, #F5DEB3 0%, #D2B48C 50%, #DEB887 100%)',
-          touchAction: 'none' // Prevent scrolling on touch
+          background: 'linear-gradient(to bottom, #F4E4BC 0%, #D2B48C 30%, #8B7355 100%)',
+          touchAction: 'none'
+        }}
+        gl={{ antialias: true, alpha: false }}
+        onCreated={({ gl }) => {
+          gl.setClearColor('#8B7355', 1);
         }}
       >
-        {/* Brighter, warmer lighting setup */}
-        <ambientLight intensity={1.2} color="#F5DEB3" />
-        <directionalLight position={[5, 10, 7.5]} intensity={1.5} color="#FFFFFF" />
-        <directionalLight position={[-5, -5, -5]} intensity={0.8} color="#DEB887" />
-        <pointLight position={[0, 0, 0]} intensity={0.6} color="#F5DEB3" />
-
-        {/* Sandy atmospheric background */}
-        <SandyAtmosphere />
+        {/* Ancient sanctuary lighting */}
+        <ambientLight intensity={0.3} color="#D2B48C" />
+        <directionalLight 
+          position={[8, 12, 6]} 
+          intensity={2.0} 
+          color="#FFFACD"
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+        />
+        <directionalLight 
+          position={[-6, 10, 4]} 
+          intensity={1.2} 
+          color="#F0E68C"
+        />
+        <pointLight 
+          position={[2, 6, 3]} 
+          intensity={1.5} 
+          color="#FFFACD"
+          distance={15}
+        />
+        
+        {/* Sanctuary architecture */}
+        <SanctuaryWalls />
+        
+        {/* Volumetric light beams */}
+        <VolumetricLightBeam 
+          position={[2, 4, 2]} 
+          direction={[0.3, 0, 0.2]} 
+          intensity={0.4}
+        />
+        <VolumetricLightBeam 
+          position={[-1, 5, 1]} 
+          direction={[-0.2, 0, 0.3]} 
+          intensity={0.3}
+        />
+        <VolumetricLightBeam 
+          position={[0, 6, -2]} 
+          direction={[0, 0, 0.4]} 
+          intensity={0.35}
+        />
+        
+        {/* Floating dust particles in light beams */}
+        <DustParticles count={performanceSettings.maxDustParticles} />
 
         <MinimalCube onFaceClick={handleCubeClick} visible={cubeVisible} opacity={cubeOpacity} />
         {fragments.map(frag => <Fragment key={frag.id} {...frag} />)}
         
         {darkMatterVisible && activeSection && (
           <>
-            {/* Main energy orb with larger scale */}
+            {/* Main energy orb */}
             <group position={[ 
               darkMatterProgress * activeSection.targetPos[0], 
               darkMatterProgress * activeSection.targetPos[1], 
@@ -638,7 +855,7 @@ export default function Scene() {
               />
             </group>
             
-            {/* Trailing energy orbs with performance optimization */}
+            {/* Trailing energy orbs */}
             {[...Array(performanceSettings.maxTrails)].map((_, i) => (
               <EnergyOrbTrail
                 key={i}
@@ -698,7 +915,6 @@ export default function Scene() {
       
       <SectionContent section={menuVisible ? activeSection : null} onReset={handleReset} onMediaPlayingChange={handleMediaPlayingChange} />
       
-      {/* Only load binaural audio if performance allows */}
       {performanceSettings.enableBinaural && (
         <audio ref={binauralAudioRef} loop preload="auto" src="/audio/binaural_loop.mp3" />
       )}
