@@ -261,14 +261,14 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
         roughnessMap: iceRoughnessMap,
         normalScale: new THREE.Vector2(1, 1),
         transparent: true,
-        transmission: 0.5, // Reduced for a more solid metallic look
+        transmission: 0.5,
         opacity: opacity,
         ior: 1.5,
-        thickness: 0.8, // Adjusted for consistency with metallic theme
+        thickness: 0.8,
         emissive: new THREE.Color(props.emissive),
-        emissiveIntensity: 0.4, // Increased for a stronger glow
+        emissiveIntensity: 0.4,
         clearcoat: 1.0,
-        clearcoatRoughness: 0.05 // Smoother clearcoat for a polished look
+        clearcoatRoughness: 0.05
       });
     });
   }, [opacity, iceNormalMap, iceRoughnessMap]);
@@ -341,6 +341,7 @@ export default function Scene() {
   const [binauralPaused, setBinauralPaused] = useState(false);
   const [voidRipples, setVoidRipples] = useState([]);
   const [realityTears, setRealityTears] = useState([]);
+  const [symbolOpacity, setSymbolOpacity] = useState(1);
   const binauralAudioRef = useRef(null);
 
   const performanceSettings = useMemo(() => ({
@@ -379,6 +380,14 @@ export default function Scene() {
       }
     }
   }, [mediaIsPlaying, menuVisible, darkMatterVisible, performanceSettings.enableBinaural, binauralPaused]);
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => {
+      setSymbolOpacity(0);
+      setTimeout(() => setCubeVisible(true), 1000); // Show cube after fade
+    }, 2000); // 2-second fade
+    return () => clearTimeout(fadeTimer);
+  }, []);
 
   const handleCubeClick = useCallback((section) => {
     if (!cubeVisible || section.disabled) return;
@@ -517,7 +526,7 @@ export default function Scene() {
           left: 0,
           width: '100vw',
           height: '100vh',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)', // Matched to SectionContent.js
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
           touchAction: 'none'
         }}
       >
@@ -550,116 +559,3 @@ export default function Scene() {
                 key={i}
                 position={[
                   darkMatterProgress * activeSection.targetPos[0] * (0.7 - i * 0.1),
-                  darkMatterProgress * activeSection.targetPos[1] * (0.7 - i * 0.1),
-                  darkMatterProgress * activeSection.targetPos[2] * (0.7 - i * 0.1)
-                ]}
-                opacity={0.3 - i * 0.05}
-                scale={0.5 - i * 0.08}
-                delay={i * 0.3}
-              />
-            ))}
-          </>
-        )}
-
-        {voidRipples.map(ripple => (
-          <MetallicRipple
-            key={ripple.id}
-            origin={ripple.origin}
-            scale={ripple.scale}
-            opacity={ripple.opacity}
-          />
-        ))}
-
-        {realityTears.map(tear => (
-          <MetallicTear
-            key={tear.id}
-            startPos={tear.startPos}
-            endPos={tear.endPos}
-            progress={tear.progress}
-          />
-        ))}
-
-        {darkMatterVisible && activeSection && <CameraController darkMatterProgress={darkMatterProgress} targetPos={activeSection.targetPos} />}
-        <OrbitControls
-          enablePan={false}
-          enabled={!darkMatterVisible}
-          enableDamping={true}
-          dampingFactor={0.05}
-          maxDistance={isMobile ? 8 : 15}
-          minDistance={isMobile ? 2 : 3}
-        />
-      </Canvas>
-
-      <SectionContent section={menuVisible ? activeSection : null} onReset={handleReset} onMediaPlayingChange={handleMediaPlayingChange} />
-
-      {performanceSettings.enableBinaural && (
-        <audio ref={binauralAudioRef} loop preload="auto" src="/audio/binaural_loop.mp3" />
-      )}
-
-      {showWarning && (
-        <div style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-          border: '4px solid #808080',
-          borderRadius: '12px',
-          padding: '35px',
-          textAlign: 'center',
-          color: '#1A1A1A',
-          fontFamily: 'monospace',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          zIndex: 10000,
-          boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)',
-          textShadow: '0 0 5px rgba(0,0,255,0.3)'
-        }}>
-          <div style={{
-            marginBottom: '20px',
-            color: '#2C2C2C',
-            textShadow: '0 0 5px rgba(0,0,255,0.3)'
-          }}>
-            ⚠ INITIATING VOID GLIMPSE ⚠
-          </div>
-          <div style={{
-            color: '#1A1A1A',
-            textShadow: '0 0 5px rgba(0,0,255,0.3)'
-          }}>
-            Dimensional breach in {timeLeft} seconds...
-          </div>
-          <div style={{
-            fontSize: '14px',
-            marginTop: '15px',
-            color: '#4A4A4A',
-            fontStyle: 'italic',
-            textShadow: '0 0 5px rgba(0,0,255,0.3)'
-          }}>
-            Move to cancel
-          </div>
-        </div>
-      )}
-
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{
-          position: 'fixed',
-          top: 10,
-          left: 10,
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-          border: '2px solid #808080',
-          borderRadius: '8px',
-          padding: '10px',
-          color: '#2C2C2C',
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          fontWeight: 'bold',
-          zIndex: 9999,
-          boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
-          textShadow: '0 0 5px rgba(0,0,255,0.3)'
-        }}>
-          Device: {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | Touch: {isTouch ? 'Yes' : 'No'}
-        </div>
-      )}
-    </>
-  );
-}
