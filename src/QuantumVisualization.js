@@ -13,11 +13,7 @@ const DarkMatterBlob = forwardRef(({
   const time = useRef(0);
 
   const geometry = useMemo(() => {
-    // IcosahedronGeometry with detail 4 is already quite high poly.
-    // If you want to simulate higher/lower, you'd need multiple blobs
-    // or dynamically change the detail, which is more complex.
-    // Let's focus on deformation intensity.
-    const geo = new THREE.IcosahedronGeometry(scale, 4);
+    const geo = new THREE.IcosahedronGeometry(scale, 3); // Reduced detail to 3 for smoother low-poly
     const positions = geo.attributes.position.array;
     geo.userData.originalPositions = new Float32Array(positions);
     return geo;
@@ -25,15 +21,15 @@ const DarkMatterBlob = forwardRef(({
 
   const material = useMemo(() => {
     return new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0x000000), // Black
+      color: new THREE.Color(0x00B7EB), // Blue tone
       metalness: 0.95,
-      roughness: 0.05,
+      roughness: 0.03, // Slightly smoother
       clearcoat: 1.0,
       clearcoatRoughness: 0.0,
       transparent: true,
       opacity: opacity * 0.9,
-      emissive: new THREE.Color(0x000000), // Ensure it's black
-      emissiveIntensity: 0 // No emissive light
+      emissive: new THREE.Color(0x00B7EB), // Blue emissive
+      emissiveIntensity: 0.2 // Subtle glow
     });
   }, [opacity]);
 
@@ -51,22 +47,17 @@ const DarkMatterBlob = forwardRef(({
       const y = original[i + 1];
       const z = original[i + 2];
 
-      // Increased chaotic movement multipliers for more deformation
-      // Added more sin/cos waves for complexity
-      const chaosFactor = Math.sin(t * 15 + x * 25 + y * 25 + z * 25) * 0.15; // Increased multiplier
-      const chaosX = Math.sin(t * 4 + y * 15) * chaosFactor;
-      const chaosY = Math.cos(t * 4.5 + z * 15) * chaosFactor;
-      const chaosZ = Math.sin(t * 5 + x * 15) * chaosFactor;
+      const chaosFactor = Math.sin(t * 10 + x * 20 + y * 20 + z * 20) * 0.1; // Reduced for smoother motion
+      const chaosX = Math.sin(t * 3 + y * 10) * chaosFactor;
+      const chaosY = Math.cos(t * 3.5 + z * 10) * chaosFactor;
+      const chaosZ = Math.sin(t * 4 + x * 10) * chaosFactor;
 
-      // Apply deformation with a slightly larger range
       positions[i] = x + chaosX;
       positions[i + 1] = y + chaosY;
       positions[i + 2] = z + chaosZ;
 
-      // Morph more when flowing - this effect will now be more pronounced
       if (isFlowing && flowProgress > 0) {
-        // More aggressive morphing with progress
-        const morphIntensity = Math.sin(flowProgress * Math.PI * 6) * 0.3; // Increased intensity
+        const morphIntensity = Math.sin(flowProgress * Math.PI * 4) * 0.2; // Softer morph
         positions[i] *= (1 + morphIntensity);
         positions[i + 1] *= (1 + morphIntensity);
         positions[i + 2] *= (1 + morphIntensity);
@@ -74,12 +65,11 @@ const DarkMatterBlob = forwardRef(({
     }
 
     meshRef.current.geometry.attributes.position.needsUpdate = true;
-    meshRef.current.geometry.computeVertexNormals(); // Recompute normals for proper lighting
+    meshRef.current.geometry.computeVertexNormals();
 
-    // Rotation (can be adjusted for more/less chaos)
-    meshRef.current.rotation.x += delta * 0.3; // Slightly faster
-    meshRef.current.rotation.y += delta * 0.4; // Slightly faster
-    meshRef.current.rotation.z += delta * 0.1; // Add Z rotation
+    meshRef.current.rotation.x += delta * 0.2; // Slower rotation
+    meshRef.current.rotation.y += delta * 0.3;
+    meshRef.current.rotation.z += delta * 0.1;
   });
 
   return (
@@ -90,7 +80,7 @@ const DarkMatterBlob = forwardRef(({
 });
 
 const QuantumVisualization = forwardRef(({
-  type, // Not used anymore, always quantum
+  type,
   position = [0, 0, 0],
   scale = 1,
   opacity = 1,
