@@ -341,7 +341,6 @@ export default function Scene() {
   const [binauralPaused, setBinauralPaused] = useState(false);
   const [voidRipples, setVoidRipples] = useState([]);
   const [realityTears, setRealityTears] = useState([]);
-  const [symbolOpacity, setSymbolOpacity] = useState(1);
   const binauralAudioRef = useRef(null);
 
   const performanceSettings = useMemo(() => ({
@@ -380,14 +379,6 @@ export default function Scene() {
       }
     }
   }, [mediaIsPlaying, menuVisible, darkMatterVisible, performanceSettings.enableBinaural, binauralPaused]);
-
-  useEffect(() => {
-    const fadeTimer = setTimeout(() => {
-      setSymbolOpacity(0);
-      setTimeout(() => setCubeVisible(true), 1000); // Show cube after fade
-    }, 2000); // 2-second fade
-    return () => clearTimeout(fadeTimer);
-  }, []);
 
   const handleCubeClick = useCallback((section) => {
     if (!cubeVisible || section.disabled) return;
@@ -518,19 +509,6 @@ export default function Scene() {
 
   return (
     <>
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          opacity: symbolOpacity,
-          transition: 'opacity 2s ease-out',
-          pointerEvents: 'auto',
-          zIndex: 1001,
-        }}
-      >
-        
       <Canvas
         camera={{ position: cameraSettings.position, fov: cameraSettings.fov }}
         style={{
@@ -682,5 +660,6 @@ export default function Scene() {
           Device: {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | Touch: {isTouch ? 'Yes' : 'No'}
         </div>
       )}
+    </>
   );
 }
