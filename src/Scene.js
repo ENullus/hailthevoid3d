@@ -530,12 +530,7 @@ export default function Scene() {
           zIndex: 1001,
         }}
       >
-        {/* Replace with your symbol (e.g., an SVG or image) */}
-        <svg width="100" height="100" viewBox="0 0 100 100" style={{ pointerEvents: 'none' }}>
-          <circle cx="50" cy="50" r="40" fill="#00B7EB" />
-          <path d="M30 70 L70 30" stroke="#FFFFFF" strokeWidth="5" />
-        </svg>
-      </div>
+        
       <Canvas
         camera={{ position: cameraSettings.position, fov: cameraSettings.fov }}
         style={{
