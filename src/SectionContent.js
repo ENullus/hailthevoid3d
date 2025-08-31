@@ -1,5 +1,5 @@
 // src/SectionContent.js - Metallic UI Fixed
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const sectionContents = {
   about: {
@@ -29,109 +29,111 @@ const sectionContents = {
   }
 };
 
-function useCMSContent(sectionId) {
-  const [content, setContent] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+// Commented out for now - uncomment when you need to use CMS functionality
+// function useCMSContent(sectionId) {
+//   const [content, setContent] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!sectionId) {
-      setLoading(false);
-      return;
-    }
+//   useEffect(() => {
+//     if (!sectionId) {
+//       setLoading(false);
+//       return;
+//     }
 
-    const fetchContent = async () => {
-      try {
-        setLoading(true);
+//     const fetchContent = async () => {
+//       try {
+//         setLoading(true);
         
-        const collectionMap = {
-          'music': '_3d_music',
-          'art': '_3d_art', 
-          'video': '_3d_videos',
-          'submit': '_3d_submissions'
-        };
+//         const collectionMap = {
+//           'music': '_3d_music',
+//           'art': '_3d_art', 
+//           'video': '_3d_videos',
+//           'submit': '_3d_submissions'
+//         };
 
-        const collection = collectionMap[sectionId];
-        if (!collection) {
-          setContent([]);
-          setLoading(false);
-          return;
-        }
+//         const collection = collectionMap[sectionId];
+//         if (!collection) {
+//           setContent([]);
+//           setLoading(false);
+//           return;
+//         }
 
-        const repoUrl = 'https://api.github.com/repos/ENullus/HailTheVoidOrg/contents';
-        const folderUrl = `${repoUrl}/${collection}`;
+//         const repoUrl = 'https://api.github.com/repos/ENullus/HailTheVoidOrg/contents';
+//         const folderUrl = `${repoUrl}/${collection}`;
         
-        const response = await fetch(folderUrl);
+//         const response = await fetch(folderUrl);
         
-        if (!response.ok) {
-          if (response.status === 404) {
-            setContent([]);
-            setLoading(false);
-            return;
-          }
-          throw new Error(`HTTP ${response.status}`);
-        }
+//         if (!response.ok) {
+//           if (response.status === 404) {
+//             setContent([]);
+//             setLoading(false);
+//             return;
+//           }
+//           throw new Error(`HTTP ${response.status}`);
+//         }
 
-        const files = await response.json();
-        const markdownFiles = files.filter(file => file.name.endsWith('.md'));
+//         const files = await response.json();
+//         const markdownFiles = files.filter(file => file.name.endsWith('.md'));
         
-        const contentPromises = markdownFiles.map(async (file) => {
-          const fileResponse = await fetch(file.download_url);
-          const fileContent = await fileResponse.text();
+//         const contentPromises = markdownFiles.map(async (file) => {
+//           const fileResponse = await fetch(file.download_url);
+//           const fileContent = await fileResponse.text();
           
-          const frontMatterMatch = fileContent.match(/^---\n([\s\S]*?)\n---/);
-          if (frontMatterMatch) {
-            const frontMatter = frontMatterMatch[1];
-            const content = fileContent.replace(frontMatterMatch[0], '').trim();
+//           const frontMatterMatch = fileContent.match(/^---\n([\s\S]*?)\n---/);
+//           if (frontMatterMatch) {
+//             const frontMatter = frontMatterMatch[1];
+//             const content = fileContent.replace(frontMatterMatch[0], '').trim();
             
-            const data = {};
-            frontMatter.split('\n').forEach(line => {
-              const [key, ...valueParts] = line.split(':');
-              if (key && valueParts.length > 0) {
-                let value = valueParts.join(':').trim();
-                value = value.replace(/^["']|["']$/g, '');
-                data[key.trim()] = value;
-              }
-            });
+//             const data = {};
+//             frontMatter.split('\n').forEach(line => {
+//               const [key, ...valueParts] = line.split(':');
+//               if (key && valueParts.length > 0) {
+//                 let value = valueParts.join(':').trim();
+//                 value = value.replace(/^["']|["']$/g, '');
+//                 data[key.trim()] = value;
+//               }
+//             });
             
-            return {
-              ...data,
-              content,
-              filename: file.name
-            };
-          }
-          return null;
-        });
+//             return {
+//               ...data,
+//               content,
+//               filename: file.name
+//             };
+//           }
+//           return null;
+//         });
 
-        const resolvedContent = await Promise.all(contentPromises);
-        const validContent = resolvedContent.filter(item => item !== null);
+//         const resolvedContent = await Promise.all(contentPromises);
+//         const validContent = resolvedContent.filter(item => item !== null);
         
-        validContent.sort((a, b) => {
-          if (a.date && b.date) {
-            return new Date(b.date) - new Date(a.date);
-          }
-          return 0;
-        });
+//         validContent.sort((a, b) => {
+//           if (a.date && b.date) {
+//             return new Date(b.date) - new Date(a.date);
+//           }
+//           return 0;
+//         });
 
-        setContent(validContent);
-      } catch (err) {
-        console.error('Failed to fetch CMS content:', err);
-        setError(err.message);
-        setContent([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+//         setContent(validContent);
+//       } catch (err) {
+//         console.error('Failed to fetch CMS content:', err);
+//         setError(err.message);
+//         setContent([]);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
 
-    fetchContent();
-  }, [sectionId]);
+//     fetchContent();
+//   }, [sectionId]);
 
-  return { content, loading, error };
-}
+//   return { content, loading, error };
+// }
 
 function SectionContent({ section, onReset, onMediaPlayingChange }) {
-  const { content: cmsContent, loading: cmsLoading, error: cmsError } = useCMSContent(section?.id);
-  const videoRef = useRef(null);
+  // Removed unused variables - uncomment and implement when needed
+  // const { content: cmsContent, loading: cmsLoading, error: cmsError } = useCMSContent(section?.id);
+  // const videoRef = useRef(null);
 
   useEffect(() => {
     if (typeof onMediaPlayingChange === 'function') {
