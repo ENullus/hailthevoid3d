@@ -708,12 +708,77 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
       </div>
     );
   } else if (section.id === 'submit') {
-    const mailtoLink = `mailto:submission@hailthevoid.net?subject=Art Submission: Hail The Void&body=Greetings,%0D%0A%0D%0AI would like to submit my artwork for consideration.%0D%0A%0D%0A[Link to my art/portfolio or attach files]%0D%0A%0D%0AThank you.`;
+    const [formData, setFormData] = useState({ name: '', email: '', artworkLink: '', message: '' });
+    const [submitted, setSubmitted] = useState(false);
+    const [file, setFile] = useState(null);
+
+    const handleChange = (e) => {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleFileChange = (e) => {
+      setFile(e.target.files[0]);
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+
+      if (!formData.name || !formData.email || (!formData.artworkLink && !file)) {
+        alert('Please fill out all required fields and provide an artwork link or file.');
+        return;
+      }
+
+      const formDataToSubmit = new FormData();
+      formDataToSubmit.append('form-name', 'submission');
+      formDataToSubmit.append('name', formData.name);
+      formDataToSubmit.append('email', formData.email);
+      formDataToSubmit.append('artworkLink', formData.artworkLink);
+      formDataToSubmit.append('message', formData.message);
+      if (file) {
+        formDataToSubmit.append('file', file);
+      }
+
+      try {
+        const response = await fetch('/', {
+          method: 'POST',
+          body: formDataToSubmit
+        });
+        if (response.ok) {
+          setSubmitted(true);
+        } else {
+          throw new Error('Submission failed.');
+        }
+      } catch (error) {
+        alert('Error submitting: ' + error.message);
+      }
+    };
+
+    if (submitted) {
+      return (
+        <div style={{
+          padding: '20px',
+          textAlign: 'center',
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          borderRadius: '8px',
+          boxShadow: '0 0 20px rgba(0,0,255,0.2)'
+        }}>
+          <h2 style={{ color: '#1A1A1A', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>Submission Received</h2>
+          <p style={{ color: '#2C2C2C', textShadow: '0 1px 1px rgba(255,255,255,0.8)' }}>Your art has been transmitted to the void. Await resonance.</p>
+          <button onClick={onReset} style={{
+            marginTop: '15px',
+            padding: '10px 20px',
+            background: '#007BFF',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}>Return</button>
+        </div>
+      );
+    }
 
     sectionSpecificContent = (
-      <div style={{
-        padding: '20px'
-      }}>
+      <div style={{ padding: '20px' }}>
         <div style={{
           color: '#2C2C2C',
           fontSize: '0.9rem',
@@ -738,32 +803,19 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             fontSize: '0.9rem',
             textShadow: '0 1px 1px rgba(255,255,255,0.8)'
           }}>
-            <div>
-              <span style={{ marginRight: '10px', color: '#0066CC' }}>001</span>
-              <span>PREPARE_DIGITAL_CONSCIOUSNESS</span>
-            </div>
-            <div>
-              <span style={{ marginRight: '10px', color: '#0066CC' }}>002</span>
-              <span>ALIGN_CREATIVE_FREQUENCY</span>
-            </div>
-            <div>
-              <span style={{ marginRight: '10px', color: '#0066CC' }}>003</span>
-              <span>INITIATE_TRANSMISSION</span>
-            </div>
+            <div><span style={{ color: '#0066CC' }}>001</span> PREPARE_DIGITAL_CONSCIOUSNESS</div>
+            <div><span style={{ color: '#0066CC' }}>002</span> ALIGN_CREATIVE_FREQUENCY</div>
+            <div><span style={{ color: '#0066CC' }}>003</span> INITIATE_TRANSMISSION</div>
           </div>
         </div>
 
         {cmsContent.length > 0 && (
-          <div style={{
-            marginBottom: '20px'
-          }}>
+          <div style={{ marginBottom: '20px' }}>
             <h3 style={{
               color: '#1A1A1A',
               marginBottom: '15px',
               textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
-            }}>
-              Recent Submissions:
-            </h3>
+            }}>Recent Submissions:</h3>
             {renderContentGrid(cmsContent.slice(0, 3), 'submissions')}
           </div>
         )}
@@ -778,38 +830,183 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           Ensure dimensional compatibility before upload.
         </p>
 
-        <a href={mailtoLink} style={{
-          display: 'inline-block',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-          border: '2px solid #808080',
-          borderRadius: '8px',
-          padding: '12px 25px',
-          color: '#1A1A1A',
-          textDecoration: 'none',
-          fontWeight: 'bold',
-          fontSize: '1rem',
-          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
-          boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
-          transition: 'all 0.3s ease'
-        }}>
-          OPEN PORTAL
-        </a>
-
-        <div style={{
-          color: '#2C2C2C',
-          fontSize: '0.9rem',
-          marginTop: '15px',
-          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
-        }}>
-          ⚠ CAUTION: Email client will breach current dimension
-        </div>
+        <form
+          name="submission"
+          method="POST"
+          data-netlify="true"
+          data-netlify-honeypot="bot-field"
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
+        >
+          <input type="hidden" name="form-name" value="submission" />
+          <p hidden>
+            <label>Don’t fill this out: <input name="bot-field" /></label>
+          </p>
+          <div>
+            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>ENTITY_DESIGNATION</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: '#F0F0F0',
+                border: '2px solid #808080',
+                borderRadius: '6px',
+                color: '#1A1A1A',
+                fontWeight: 'bold'
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>RETURN_FREQUENCY</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: '#F0F0F0',
+                border: '2px solid #808080',
+                borderRadius: '6px',
+                color: '#1A1A1A',
+                fontWeight: 'bold'
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>ARTWORK_LINK</label>
+            <input
+              type="url"
+              name="artworkLink"
+              value={formData.artworkLink}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: '#F0F0F0',
+                border: '2px solid #808080',
+                borderRadius: '6px',
+                color: '#1A1A1A',
+                fontWeight: 'bold'
+              }}
+              placeholder="Or upload a file below"
+            />
+          </div>
+          <div>
+            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>UPLOAD_ARTWORK</label>
+            <input
+              type="file"
+              name="file"
+              onChange={handleFileChange}
+              style={{ width: '100%', padding: '12px', background: '#F0F0F0', border: '2px solid #808080', borderRadius: '6px' }}
+            />
+          </div>
+          <div>
+            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>DATA_PACKET</label>
+            <textarea
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              required
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: '#F0F0F0',
+                border: '2px solid #808080',
+                borderRadius: '6px',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                minHeight: '100px'
+              }}
+            />
+          </div>
+          <button
+            type="submit"
+            style={{
+              padding: '12px 25px',
+              background: '#007BFF',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            TRANSMIT
+          </button>
+        </form>
       </div>
     );
   } else if (section.id === 'contact') {
+    const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+    const [submitted, setSubmitted] = useState(false);
+
+    const handleChange = (e) => {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+
+      if (!formData.name || !formData.email || !formData.message) {
+        alert('Please fill out all fields.');
+        return;
+      }
+
+      const formDataToSubmit = new FormData();
+      formDataToSubmit.append('form-name', 'contact');
+      formDataToSubmit.append('name', formData.name);
+      formDataToSubmit.append('email', formData.email);
+      formDataToSubmit.append('message', formData.message);
+
+      try {
+        const response = await fetch('/', {
+          method: 'POST',
+          body: formDataToSubmit
+        });
+        if (response.ok) {
+          setSubmitted(true);
+        } else {
+          throw new Error('Submission failed.');
+        }
+      } catch (error) {
+        alert('Error submitting: ' + error.message);
+      }
+    };
+
+    if (submitted) {
+      return (
+        <div style={{
+          padding: '20px',
+          textAlign: 'center',
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          borderRadius: '8px',
+          boxShadow: '0 0 20px rgba(0,0,255,0.2)'
+        }}>
+          <h2 style={{ color: '#1A1A1A', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>Message Sent</h2>
+          <p style={{ color: '#2C2C2C', textShadow: '0 1px 1px rgba(255,255,255,0.8)' }}>We’ll connect with you soon.</p>
+          <button onClick={onReset} style={{
+            marginTop: '15px',
+            padding: '10px 20px',
+            background: '#007BFF',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}>Return</button>
+        </div>
+      );
+    }
+
     sectionSpecificContent = (
-      <div style={{
-        padding: '20px'
-      }}>
+      <div style={{ padding: '20px' }}>
         <div style={{
           color: '#2C2C2C',
           fontSize: '0.9rem',
@@ -818,41 +1015,12 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           COMMUNICATION ARRAY: <span style={{ color: '#0066CC' }}>ONLINE</span>
         </div>
 
-        <div style={{
-          display: 'flex',
-          gap: '5px',
-          marginBottom: '20px'
-        }}>
-          <div style={{
-            width: '8px',
-            height: '20px',
-            background: 'linear-gradient(180deg, #00B7EB, #000)',
-            borderRadius: '2px'
-          }} />
-          <div style={{
-            width: '8px',
-            height: '20px',
-            background: 'linear-gradient(180deg, #00B7EB, #000)',
-            borderRadius: '2px'
-          }} />
-          <div style={{
-            width: '8px',
-            height: '20px',
-            background: 'linear-gradient(180deg, #00B7EB, #000)',
-            borderRadius: '2px'
-          }} />
-          <div style={{
-            width: '8px',
-            height: '20px',
-            background: 'linear-gradient(180deg, #333, #000)',
-            borderRadius: '2px'
-          }} />
-          <div style={{
-            width: '8px',
-            height: '20px',
-            background: 'linear-gradient(180deg, #333, #000)',
-            borderRadius: '2px'
-          }} />
+        <div style={{ display: 'flex', gap: '5px', marginBottom: '20px' }}>
+          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #00B7EB, #000)', borderRadius: '2px' }} />
+          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #00B7EB, #000)', borderRadius: '2px' }} />
+          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #00B7EB, #000)', borderRadius: '2px' }} />
+          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #333, #000)', borderRadius: '2px' }} />
+          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #333, #000)', borderRadius: '2px' }} />
         </div>
 
         <p style={{
@@ -864,144 +1032,90 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           Establish quantum entanglement. Your transmission will echo through the void.
         </p>
 
-        <div>
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="contact-name" style={{
-              display: 'block',
-              color: '#1A1A1A',
-              fontWeight: 'bold',
-              marginBottom: '5px',
-              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
-            }}>
-              ENTITY_DESIGNATION
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                id="contact-name"
-                name="name"
-                required
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
-                  border: '2px solid #808080',
-                  borderRadius: '6px',
-                  color: '#1A1A1A',
-                  fontWeight: 'bold',
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
-                }}
-              />
-              <div style={{
-                position: 'absolute',
-                top: '0',
-                left: '0',
+        <form
+          name="contact"
+          method="POST"
+          data-netlify="true"
+          data-netlify-honeypot="bot-field"
+          onSubmit={handleSubmit}
+          style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
+        >
+          <input type="hidden" name="form-name" value="contact" />
+          <p hidden>
+            <label>Don’t fill this out: <input name="bot-field" /></label>
+          </p>
+          <div>
+            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>ENTITY_DESIGNATION</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              style={{
                 width: '100%',
-                height: '2px',
-                background: 'linear-gradient(90deg, transparent, #00B7EB, transparent)',
-                animation: 'scan 2s infinite'
-              }} />
-            </div>
+                padding: '12px',
+                background: '#F0F0F0',
+                border: '2px solid #808080',
+                borderRadius: '6px',
+                color: '#1A1A1A',
+                fontWeight: 'bold'
+              }}
+            />
           </div>
-
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="contact-email" style={{
-              display: 'block',
-              color: '#1A1A1A',
-              fontWeight: 'bold',
-              marginBottom: '5px',
-              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
-            }}>
-              RETURN_FREQUENCY
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="email"
-                id="contact-email"
-                name="email"
-                required
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
-                  border: '2px solid #808080',
-                  borderRadius: '6px',
-                  color: '#1A1A1A',
-                  fontWeight: 'bold',
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
-                }}
-              />
-              <div style={{
-                position: 'absolute',
-                top: '0',
-                left: '0',
+          <div>
+            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>RETURN_FREQUENCY</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              style={{
                 width: '100%',
-                height: '2px',
-                background: 'linear-gradient(90deg, transparent, #00B7EB, transparent)',
-                animation: 'scan 2s infinite'
-              }} />
-            </div>
+                padding: '12px',
+                background: '#F0F0F0',
+                border: '2px solid #808080',
+                borderRadius: '6px',
+                color: '#1A1A1A',
+                fontWeight: 'bold'
+              }}
+            />
           </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="contact-message" style={{
-              display: 'block',
-              color: '#1A1A1A',
-              fontWeight: 'bold',
-              marginBottom: '5px',
-              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
-            }}>
-              DATA_PACKET
-            </label>
-            <div style={{ position: 'relative' }}>
-              <textarea
-                id="contact-message"
-                name="message"
-                rows="6"
-                required
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
-                  border: '2px solid #808080',
-                  borderRadius: '6px',
-                  color: '#1A1A1A',
-                  fontWeight: 'bold',
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
-                  resize: 'vertical'
-                }}
-              />
-              <div style={{
-                position: 'absolute',
-                top: '0',
-                left: '0',
+          <div>
+            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>DATA_PACKET</label>
+            <textarea
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              required
+              style={{
                 width: '100%',
-                height: '2px',
-                background: 'linear-gradient(90deg, transparent, #00B7EB, transparent)',
-                animation: 'scan 2s infinite'
-              }} />
-            </div>
+                padding: '12px',
+                background: '#F0F0F0',
+                border: '2px solid #808080',
+                borderRadius: '6px',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                minHeight: '100px'
+              }}
+            />
           </div>
-
           <button
             type="submit"
             style={{
-              background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-              border: '2px solid #808080',
-              borderRadius: '8px',
               padding: '12px 25px',
-              color: '#1A1A1A',
-              fontWeight: 'bold',
-              fontSize: '1rem',
-              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
-              boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
+              background: '#007BFF',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
               cursor: 'pointer',
-              transition: 'all 0.3s ease'
+              fontWeight: 'bold'
             }}
           >
             TRANSMIT
           </button>
-        </div>
+        </form>
 
         <div style={{
           display: 'flex',
