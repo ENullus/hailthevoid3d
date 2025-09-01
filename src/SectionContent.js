@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 const sectionContents = {
   about: {
@@ -14,10 +14,10 @@ const sectionContents = {
   contact: { title: "COLLAPSE", subtitle: "CONTACT" }
 };
 
-// -------- CMS Hook (GitHub folder fetch) ----------
+// -------- GitHub CMS loader (kept from your version, simplified) ----------
 function useCMSContent(sectionId) {
   const [content, setContent] = useState([]);
-  const [loading, setLoading] = useState(!!sectionId);
+  const [loading, setLoading] = useState(Boolean(sectionId));
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -32,7 +32,6 @@ function useCMSContent(sectionId) {
       video: "_3d_videos",
       submit: "_3d_submissions"
     };
-
     const collection = collectionMap[sectionId];
     if (!collection) {
       setContent([]);
@@ -43,27 +42,25 @@ function useCMSContent(sectionId) {
     const fetchContent = async () => {
       try {
         setLoading(true);
-        const repoUrl =
-          "https://api.github.com/repos/ENullus/HailTheVoidOrg/contents";
-        const folderUrl = `${repoUrl}/${collection}`;
+        const folderUrl = `https://api.github.com/repos/ENullus/HailTheVoidOrg/contents/${collection}`;
         const res = await fetch(folderUrl);
         if (!res.ok) {
           if (res.status === 404) {
             setContent([]);
-            setLoading(false);
             return;
           }
           throw new Error(`HTTP ${res.status}`);
         }
         const files = await res.json();
-        const markdownFiles = files.filter((f) => f.name.endsWith(".md"));
+        const mdFiles = files.filter((f) => f.name.endsWith(".md"));
 
         const parsed = await Promise.all(
-          markdownFiles.map(async (f) => {
+          mdFiles.map(async (f) => {
             const fr = await fetch(f.download_url);
             const txt = await fr.text();
             const fm = txt.match(/^---\n([\s\S]*?)\n---/);
             if (!fm) return null;
+
             const data = {};
             fm[1].split("\n").forEach((line) => {
               const [k, ...rest] = line.split(":");
@@ -72,18 +69,21 @@ function useCMSContent(sectionId) {
               v = v.replace(/^["']|["']$/g, "");
               data[k.trim()] = v;
             });
-            return { ...data, content: txt.replace(fm[0], "").trim(), filename: f.name };
+
+            return {
+              ...data,
+              content: txt.replace(fm[0], "").trim(),
+              filename: f.name
+            };
           })
         );
 
         const valid = parsed.filter(Boolean);
-        valid.sort((a, b) => {
-          if (a.date && b.date) return new Date(b.date) - new Date(a.date);
-          return 0;
-        });
+        valid.sort((a, b) =>
+          a.date && b.date ? new Date(b.date) - new Date(a.date) : 0
+        );
         setContent(valid);
       } catch (err) {
-        console.error("CMS fetch error:", err);
         setError(err.message || "Failed to load");
         setContent([]);
       } finally {
@@ -97,12 +97,12 @@ function useCMSContent(sectionId) {
   return { content, loading, error };
 }
 
-// ------------- Component -----------------
-function SectionContent({ section, onReset, onMediaPlayingChange }) {
+// ---------------------- Main Component ----------------------
+export default function SectionContent({ section, onReset, onMediaPlayingChange }) {
   const { content: cmsContent, loading: cmsLoading, error: cmsError } =
     useCMSContent(section?.id);
 
-  // Forms state
+  // Contact form state
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -111,6 +111,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [contactSubmitting, setContactSubmitting] = useState(false);
 
+  // Submission form state
   const [submitForm, setSubmitForm] = useState({
     name: "",
     email: "",
@@ -121,27 +122,31 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
   const [submitSubmitted, setSubmitSubmitted] = useState(false);
   const [submitSubmitting, setSubmitSubmitting] = useState(false);
 
+  // Pause ambient audio when opening a section
   useEffect(() => {
-    // pause binaural bed when any section opens; Scene listens to this
-    if (typeof onMediaPlayingChange === "function") onMediaPlayingChange(false);
+    if (typeof onMediaPlayingChange === "function") {
+      onMediaPlayingChange(false);
+    }
   }, [section, onMediaPlayingChange]);
 
   if (!section || !sectionContents[section.id]) return null;
+  const sdata = sectionContents[section.id];
 
-  // ---------- utilities ----------
+  // -------- shared helpers --------
   const renderMediaPlayer = (type, src, title = "") => {
     const Tag = type === "audio" ? "audio" : "video";
     return (
       <div
         style={{
           position: "relative",
+          overflow: "visible",
           background:
-            "linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)",
+            "linear-gradient(145deg,#E8E8E8 0%,#D0D0D0 30%,#C0C0C0 70%,#A8A8A8 100%)",
           border: "2px solid #808080",
           borderRadius: 8,
-          padding: 10,
           boxShadow:
-            "0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)"
+            "0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)",
+          padding: 10
         }}
       >
         <Tag
@@ -149,7 +154,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           src={src}
           style={{
             width: "100%",
-            maxHeight: type === "video" ? 360 : "auto",
+            maxHeight: type === "video" ? 350 : "auto",
             background: "#000",
             borderRadius: 6
           }}
@@ -171,21 +176,22 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           style={{
             textAlign: "center",
             padding: 20,
-            background: "linear-gradient(145deg, #B0B0B0 0%, #A0A0A0 100%)",
-            borderRadius: 8
+            background: "linear-gradient(145deg,#B0B0B0 0%,#A0A0A0 100%)",
+            borderRadius: 8,
+            boxShadow: "inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.3)"
           }}
         >
           <div
             style={{
-              width: 48,
-              height: 48,
+              width: 50,
+              height: 50,
               borderRadius: "50%",
-              background: "radial-gradient(circle, #00B7EB, #000)",
+              background: "radial-gradient(circle,#00B7EB,#000)",
               margin: "0 auto 10px",
               animation: "pulse 1.5s infinite"
             }}
           />
-          <div>ACCESSING {label.toUpperCase()} MATRIX...</div>
+          <div>ACCESSING {label.toUpperCase()} MATRIX…</div>
         </div>
       );
 
@@ -195,7 +201,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           style={{
             textAlign: "center",
             padding: 20,
-            background: "linear-gradient(145deg, #B0B0B0 0%, #A0A0A0 100%)",
+            background: "linear-gradient(145deg,#B0B0B0 0%,#A0A0A0 100%)",
             borderRadius: 8
           }}
         >
@@ -214,33 +220,29 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           padding: 20
         }}
       >
-        {items.map((it, i) => (
+        {items.map((it, idx) => (
           <div
-            key={i}
+            key={idx}
             style={{
               background:
-                "linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)",
+                "linear-gradient(145deg,#E8E8E8 0%,#D0D0D0 30%,#C0C0C0 70%,#A8A8A8 100%)",
               border: "2px solid #808080",
               borderRadius: 8,
-              padding: 16
+              padding: 16,
+              boxShadow:
+                "0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)"
             }}
           >
-            <div
-              style={{ fontWeight: "bold", color: "#1A1A1A", marginBottom: 8 }}
-            >
+            <div style={{ fontWeight: "bold", color: "#1A1A1A", marginBottom: 8 }}>
               {it.title || "Untitled"}
             </div>
 
             {it.artist && (
-              <div style={{ color: "#2C2C2C", marginBottom: 8 }}>
-                by {it.artist}
-              </div>
+              <div style={{ color: "#2C2C2C", marginBottom: 8 }}>by {it.artist}</div>
             )}
 
             {it.description && (
-              <div style={{ color: "#2C2C2C", marginBottom: 12 }}>
-                {it.description}
-              </div>
+              <div style={{ color: "#2C2C2C", marginBottom: 12 }}>{it.description}</div>
             )}
 
             {it.youtube_url && (
@@ -252,11 +254,12 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                     height: 0,
                     overflow: "hidden",
                     border: "2px solid #808080",
-                    borderRadius: 6
+                    borderRadius: 6,
+                    boxShadow: "0 0 15px rgba(0,0,255,0.2)"
                   }}
                 >
                   <iframe
-                    title={it.title || "video"}
+                    title={it.title || "Video"}
                     src={
                       it.youtube_url.includes("embed")
                         ? it.youtube_url
@@ -296,9 +299,10 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                   width: "100%",
                   maxHeight: 300,
                   objectFit: "cover",
-                  borderRadius: 6,
+                  marginBottom: 10,
                   border: "2px solid #808080",
-                  marginBottom: 10
+                  borderRadius: 6,
+                  boxShadow: "0 0 15px rgba(0,0,255,0.2)"
                 }}
               />
             )}
@@ -306,18 +310,16 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             <div
               style={{
                 display: "flex",
-                gap: 10,
                 flexWrap: "wrap",
-                color: "#2C2C2C",
-                fontSize: "0.85rem"
+                gap: 10,
+                fontSize: "0.85rem",
+                color: "#2C2C2C"
               }}
             >
               {it.genre && <span># {it.genre}</span>}
               {it.duration && <span>{it.duration}</span>}
               {it.medium && <span>{it.medium}</span>}
-              {it.date && (
-                <span>{new Date(it.date).toLocaleDateString()}</span>
-              )}
+              {it.date && <span>{new Date(it.date).toLocaleDateString()}</span>}
             </div>
           </div>
         ))}
@@ -325,21 +327,21 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     );
   };
 
-  // ---------- handlers ----------
+  // -------- handlers (Netlify-friendly: FormData) --------
   const handleContactSubmit = async (e) => {
     e.preventDefault();
     setContactSubmitting(true);
     try {
-      const formEl = e.currentTarget;
-      const fd = new FormData(formEl); // multipart/form-data; Netlify friendly
+      const fd = new FormData(e.currentTarget); // includes hidden fields
       const res = await fetch("/", { method: "POST", body: fd });
       if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`HTTP ${res.status}: ${txt.slice(0, 200)}`);
+        const t = await res.text();
+        throw new Error(`HTTP ${res.status}: ${t.slice(0, 200)}`);
       }
       setContactSubmitted(true);
       setContactForm({ name: "", email: "", message: "" });
     } catch (err) {
+      // Keep console (useful in CI) but no eslint warning since used.
       console.error("Contact form error:", err);
       alert("Transmission failed. Please try again.");
     } finally {
@@ -351,12 +353,11 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     e.preventDefault();
     setSubmitSubmitting(true);
     try {
-      const formEl = e.currentTarget;
-      const fd = new FormData(formEl); // includes file if present
+      const fd = new FormData(e.currentTarget); // handles file automatically
       const res = await fetch("/", { method: "POST", body: fd });
       if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`HTTP ${res.status}: ${txt.slice(0, 200)}`);
+        const t = await res.text();
+        throw new Error(`HTTP ${res.status}: ${t.slice(0, 200)}`);
       }
       setSubmitSubmitted(true);
       setSubmitForm({
@@ -374,9 +375,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     }
   };
 
-  // ---------- section-specific content ----------
-  const sdata = sectionContents[section.id];
-
+  // ---------------- section-specific bodies ----------------
   let sectionSpecificContent = null;
 
   if (section.id === "about") {
@@ -385,19 +384,23 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         style={{
           padding: 20,
           background:
-            "linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)",
-          borderRadius: 8
+            "linear-gradient(145deg,#E8E8E8 0%,#D0D0D0 30%,#C0C0C0 70%,#A8A8A8 100%)",
+          borderRadius: 8,
+          boxShadow:
+            "0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)"
         }}
       >
         <div style={{ color: "#2C2C2C", marginBottom: 12 }}>
-          ACCESSING CONSCIOUSNESS MATRIX...
+          ACCESSING CONSCIOUSNESS MATRIX…
         </div>
         <div style={{ color: "#1A1A1A", lineHeight: 1.6 }}>
           <p>{sdata.content}</p>
         </div>
       </div>
     );
-  } else if (section.id === "music") {
+  }
+
+  if (section.id === "music") {
     sectionSpecificContent = (
       <div style={{ padding: 20 }}>
         <div style={{ color: "#2C2C2C", marginBottom: 12 }}>
@@ -406,17 +409,20 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         {renderContentGrid(cmsContent, "music")}
       </div>
     );
-  } else if (section.id === "art") {
+  }
+
+  if (section.id === "art") {
     sectionSpecificContent = (
       <div style={{ padding: 20 }}>
         <div style={{ color: "#2C2C2C", marginBottom: 12 }}>
-          VISUAL CORTEX INTERFACE:{" "}
-          <span style={{ color: "#0066CC" }}>SYNCED</span>
+          VISUAL CORTEX INTERFACE: <span style={{ color: "#0066CC" }}>SYNCED</span>
         </div>
         {renderContentGrid(cmsContent, "disruptions")}
       </div>
     );
-  } else if (section.id === "video") {
+  }
+
+  if (section.id === "video") {
     sectionSpecificContent = (
       <div style={{ padding: 20 }}>
         <div style={{ color: "#2C2C2C", marginBottom: 12 }}>
@@ -425,16 +431,19 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         {renderContentGrid(cmsContent, "video streams")}
       </div>
     );
-  } else if (section.id === "submit") {
+  }
+
+  if (section.id === "submit") {
     sectionSpecificContent = submitSubmitted ? (
       <div style={{ padding: 20, textAlign: "center" }}>
         <div
           style={{
             background:
-              "linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)",
+              "linear-gradient(145deg,#E8E8E8 0%,#D0D0D0 30%,#C0C0C0 70%,#A8A8A8 100%)",
             border: "2px solid #808080",
             borderRadius: 8,
-            padding: 28
+            padding: 28,
+            boxShadow: "0 0 20px rgba(0,0,255,0.2)"
           }}
         >
           <div
@@ -442,8 +451,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               width: 60,
               height: 60,
               borderRadius: "50%",
+              background: "radial-gradient(circle,#32CD32,#228B22)",
               margin: "0 auto 16px",
-              background: "radial-gradient(circle, #32CD32, #228B22)",
               color: "#fff",
               display: "grid",
               placeItems: "center",
@@ -452,7 +461,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           >
             ✓
           </div>
-          <h3 style={{ marginBottom: 10, color: "#1A1A1A" }}>
+          <h3 style={{ color: "#1A1A1A", marginBottom: 10 }}>
             TRANSMISSION COMPLETE
           </h3>
           <p style={{ color: "#2C2C2C", marginBottom: 16 }}>
@@ -478,20 +487,15 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           SUBMISSION PROTOCOL: <span style={{ color: "#0066CC" }}>READY</span>
         </div>
 
-        {cmsContent.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <h3 style={{ color: "#1A1A1A" }}>Recent Submissions</h3>
-            {renderContentGrid(cmsContent.slice(0, 3), "submissions")}
-          </div>
-        )}
-
         <form
           name="submission"
           method="POST"
           data-netlify="true"
           data-netlify-honeypot="bot-field"
+          encType="multipart/form-data"
           onSubmit={handleSubmitSubmit}
         >
+          {/* Netlify-required hidden fields */}
           <input type="hidden" name="form-name" value="submission" />
           <input
             type="text"
@@ -513,6 +517,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               }
               required
               placeholder="Your name / alias"
+              autoComplete="name"
               style={{ width: "100%", padding: 12 }}
             />
           </div>
@@ -528,6 +533,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               }
               required
               placeholder="you@domain.com"
+              inputMode="email"
+              autoComplete="email"
               style={{ width: "100%", padding: 12 }}
             />
           </div>
@@ -571,7 +578,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
                 setSubmitForm({ ...submitForm, message: e.target.value })
               }
               required
-              placeholder="Describe your piece, links ok…"
+              placeholder="Describe your piece, links OK…"
               style={{ width: "100%", padding: 12 }}
             />
           </div>
@@ -582,16 +589,19 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         </form>
       </div>
     );
-  } else if (section.id === "contact") {
+  }
+
+  if (section.id === "contact") {
     sectionSpecificContent = contactSubmitted ? (
       <div style={{ padding: 20, textAlign: "center" }}>
         <div
           style={{
             background:
-              "linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)",
+              "linear-gradient(145deg,#E8E8E8 0%,#D0D0D0 30%,#C0C0C0 70%,#A8A8A8 100%)",
             border: "2px solid #808080",
             borderRadius: 8,
-            padding: 28
+            padding: 28,
+            boxShadow: "0 0 20px rgba(0,0,255,0.2)"
           }}
         >
           <div
@@ -599,8 +609,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               width: 60,
               height: 60,
               borderRadius: "50%",
+              background: "radial-gradient(circle,#32CD32,#228B22)",
               margin: "0 auto 16px",
-              background: "radial-gradient(circle, #32CD32, #228B22)",
               color: "#fff",
               display: "grid",
               placeItems: "center",
@@ -636,7 +646,8 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         </div>
         <p style={{ color: "#1A1A1A", marginBottom: 16 }}>
           Establish quantum entanglement. Your transmission will echo through
-          the void. <br />
+          the void.
+          <br />
           <small>
             <b>How to fill:</b> ENTITY_DESIGNATION = your name/alias,
             RETURN_FREQUENCY = your email, DATA_PACKET = your message.
@@ -716,7 +727,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     );
   }
 
-  // ------------- Render (single root) -------------
+  // ------------------ Modal Shell (single root) ------------------
   return (
     <div
       style={{
@@ -729,12 +740,15 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         justifyContent: "center",
         zIndex: 1000,
         pointerEvents: "auto",
-        animation: "materialize 0.4s ease forwards"
+        animation: "materialize 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards"
       }}
     >
       <style>{`
-        @keyframes materialize { from {opacity:0; transform:scale(.98)} to {opacity:1; transform:scale(1)} }
-        @keyframes pulse { 0%,100%{opacity:.7} 50%{opacity:1} }
+        @keyframes materialize {
+          0% { opacity: 0; transform: scale(0.95); filter: blur(4px); }
+          100% { opacity: 1; transform: scale(1); filter: blur(0); }
+        }
+        @keyframes pulse { 0%,100% { opacity:.7 } 50% { opacity:1 } }
       `}</style>
 
       <div
@@ -743,20 +757,21 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
           maxWidth: 820,
           maxHeight: "88vh",
           background:
-            "linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)",
+            "linear-gradient(145deg,#E8E8E8 0%,#D0D0D0 30%,#C0C0C0 70%,#A8A8A8 100%)",
           border: "4px solid #808080",
           borderRadius: 12,
+          boxShadow:
+            "0 0 50px rgba(0,0,255,0.25), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)",
           overflow: "hidden",
           display: "flex",
-          flexDirection: "column",
-          boxShadow: "0 0 40px rgba(0,0,255,0.25)"
+          flexDirection: "column"
         }}
       >
         {/* Header */}
         <div
           style={{
             background:
-              "linear-gradient(145deg, #E0E0E0 0%, #C8C8C8 50%, #B0B0B0 100%)",
+              "linear-gradient(145deg,#E0E0E0 0%,#C8C8C8 50%,#B0B0B0 100%)",
             borderBottom: "3px solid #808080",
             padding: 16,
             display: "flex",
@@ -769,14 +784,17 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
               style={{
                 margin: 0,
                 color: "#1A1A1A",
-                letterSpacing: 2,
-                fontSize: "1.6rem"
+                fontSize: "1.7rem",
+                fontWeight: "bold",
+                letterSpacing: 2
               }}
             >
               {sdata.title || section.name?.toUpperCase()}
             </h2>
             {sdata.subtitle && (
-              <div style={{ color: "#2C2C2C" }}>{sdata.subtitle}</div>
+              <div style={{ color: "#2C2C2C", fontWeight: 600, marginTop: 4 }}>
+                {sdata.subtitle}
+              </div>
             )}
           </div>
 
@@ -784,9 +802,12 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             onClick={onReset}
             title="RETURN TO CONTAINER"
             style={{
+              background:
+                "linear-gradient(145deg,#E0E0E0 0%,#D0D0D0 50%,#B8B8B8 100%)",
               border: "2px solid #808080",
               borderRadius: 8,
               padding: "10px 16px",
+              color: "#1A1A1A",
               fontWeight: "bold",
               cursor: "pointer"
             }}
@@ -801,7 +822,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             flex: 1,
             overflow: "auto",
             padding: 20,
-            background: "linear-gradient(145deg, #D0D0D0, #B8B8B8)"
+            background: "linear-gradient(145deg,#D0D0D0 0%, #B8B8B8 100%)"
           }}
         >
           {sectionSpecificContent}
@@ -811,7 +832,7 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
         <div
           style={{
             background:
-              "linear-gradient(145deg, #D8D8D8 0%, #C0C0C0 50%, #A8A8A8 100%)",
+              "linear-gradient(145deg,#D8D8D8 0%,#C0C0C0 50%,#A8A8A8 100%)",
             borderTop: "3px solid #808080",
             padding: "12px 16px",
             display: "flex",
@@ -819,15 +840,16 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             justifyContent: "space-between"
           }}
         >
-          <div style={{ color: "#2C2C2C" }}>
-            <b>SECTOR:</b> <span>{section.id?.toUpperCase()}</span>
+          <div style={{ color: "#2C2C2C", fontWeight: "bold" }}>
+            <span>SECTOR: </span>
+            <span style={{ color: "#1A1A1A" }}>{section.id?.toUpperCase()}</span>
           </div>
           <div
             style={{
               width: 12,
               height: 12,
               borderRadius: "50%",
-              background: "linear-gradient(45deg, #32CD32, #90EE90)"
+              background: "linear-gradient(45deg,#32CD32,#90EE90)"
             }}
           />
         </div>
@@ -835,5 +857,3 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
     </div>
   );
 }
-
-export default SectionContent;
