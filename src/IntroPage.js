@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
+// IntroPage.jsx
+import React, { useEffect, useRef } from 'react';
 
 function IntroPage({ onEnter }) {
+  const containerRef = useRef(null);
+  const overlayRef = useRef(null);
+
   const introContainerStyle = {
     position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
+    inset: 0,
     background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
     display: 'flex',
     flexDirection: 'column',
@@ -19,13 +20,13 @@ function IntroPage({ onEnter }) {
     textShadow: '0 2px 4px rgba(255,255,255,0.8), 0 -1px 2px rgba(0,0,0,0.3)',
     zIndex: 999,
     opacity: 0,
-    transition: 'opacity 1s ease-out',
+    transition: 'opacity 600ms ease-out'
   };
 
   const buttonStyle = {
     marginTop: '50px',
     padding: '20px 50px',
-    background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 50%, #B8B8B8 100%)',
+    background: 'linear-gradient(145deg, #F2F2F2 0%, #E4E4E4 50%, #D6D6D6 100%)',
     color: '#1A1A1A',
     border: '3px solid #808080',
     borderRadius: '10px',
@@ -34,53 +35,68 @@ function IntroPage({ onEnter }) {
     fontWeight: 'bold',
     letterSpacing: '3px',
     textTransform: 'uppercase',
-    textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.3)',
-    boxShadow: '0 0 30px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)',
-    transition: 'all 0.3s ease',
+    textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.25)',
+    boxShadow: '0 0 22px rgba(0,0,255,0.25), inset 0 3px 8px rgba(255,255,255,0.45), inset 0 -3px 8px rgba(0,0,0,0.15)',
+    transition: 'transform 200ms ease, box-shadow 200ms ease',
     fontFamily: 'monospace'
   };
 
   const buttonHoverStyle = {
-    background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
-    boxShadow: '0 0 40px rgba(0,0,255,0.5), inset 0 3px 8px rgba(255,255,255,0.6), inset 0 -3px 8px rgba(0,0,0,0.1)',
-    transform: 'translateY(-2px)'
+    transform: 'translateY(-2px)',
+    boxShadow: '0 0 30px rgba(0,0,255,0.4), inset 0 3px 8px rgba(255,255,255,0.6), inset 0 -3px 8px rgba(0,0,0,0.08)'
   };
 
   useEffect(() => {
-    const container = document.querySelector('.intro-container');
-    if (container) {
-      container.style.opacity = 1; // Fade in on mount
-    }
+    const el = containerRef.current;
+    if (el) el.style.opacity = 1; // Fade in on mount
   }, []);
 
-  const handleButtonClick = (event) => {
-    const container = event.currentTarget.closest('.intro-container');
-    if (container) {
-      container.style.opacity = 0; // Fade out on click
-      setTimeout(onEnter, 1000); // Trigger onEnter after fade-out
-    }
+  const handleButtonClick = () => {
+    const container = containerRef.current;
+    const overlay = overlayRef.current;
+    if (!container || !overlay) return;
+
+    // Start white overlay fade-in slightly before container fade-out finishes
+    overlay.style.pointerEvents = 'none';
+    overlay.style.opacity = 1;          // fade white in
+    container.style.opacity = 0;        // fade UI out
+
+    // Match to CSS durations below (overlay 700ms)
+    setTimeout(onEnter, 700);
   };
 
   return (
     <>
       <style>{`
         @keyframes metallicPulse {
-          0%, 100% { 
-            text-shadow: 0 2px 4px rgba(255,255,255,0.8), 0 -1px 2px rgba(0,0,0,0.3), 0 0 20px rgba(0,0,255,0.3);
+          0%, 100% {
+            text-shadow: 0 2px 4px rgba(255,255,255,0.8), 0 -1px 2px rgba(0,0,0,0.3), 0 0 14px rgba(0,0,255,0.25);
           }
-          50% { 
-            text-shadow: 0 2px 4px rgba(255,255,255,0.8), 0 -1px 2px rgba(0,0,0,0.3), 0 0 40px rgba(0,0,255,0.6);
+          50% {
+            text-shadow: 0 2px 4px rgba(255,255,255,0.9), 0 -1px 2px rgba(0,0,0,0.25), 0 0 28px rgba(0,0,255,0.45);
           }
         }
-        
         @keyframes scanLine {
           0% { transform: translateX(-100vw); }
           100% { transform: translateX(100vw); }
         }
       `}</style>
-      
-      <div className="intro-container" style={introContainerStyle}>
-        {/* Scanning line effect */}
+
+      {/* White overlay that fades IN on exit */}
+      <div
+        ref={overlayRef}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: '#ffffff',
+          opacity: 0,
+          transition: 'opacity 700ms ease',
+          zIndex: 1000
+        }}
+      />
+
+      <div className="intro-container" ref={containerRef} style={introContainerStyle}>
+        {/* Scanning line */}
         <div style={{
           position: 'absolute',
           top: '50%',
@@ -91,8 +107,8 @@ function IntroPage({ onEnter }) {
           animation: 'scanLine 3s infinite',
           zIndex: 1
         }} />
-        
-        {/* Metallic frame decoration */}
+
+        {/* Metallic frame */}
         <div style={{
           position: 'absolute',
           top: '30%',
@@ -106,8 +122,8 @@ function IntroPage({ onEnter }) {
           boxShadow: 'inset 0 3px 8px rgba(255,255,255,0.2), inset 0 -3px 8px rgba(0,0,0,0.2)',
           zIndex: -1
         }} />
-        
-        {/* Corner decorations */}
+
+        {/* Corner beacons */}
         {[0, 1, 2, 3].map(i => (
           <div key={i} style={{
             position: 'absolute',
@@ -122,10 +138,9 @@ function IntroPage({ onEnter }) {
             ...(i === 3 && { bottom: '25%', right: '15%' })
           }} />
         ))}
-        
+
         <div style={{
           fontSize: '1.5em',
-          textShadow: '0 2px 4px rgba(255,255,255,0.8), 0 -1px 2px rgba(0,0,0,0.3)',
           color: '#1A1A1A',
           animation: 'metallicPulse 2s infinite',
           marginBottom: '20px',
@@ -133,8 +148,8 @@ function IntroPage({ onEnter }) {
         }}>
           HAIL THE VOID
         </div>
-        
-        {/* Status indicators */}
+
+        {/* Status */}
         <div style={{
           display: 'flex',
           gap: '20px',
@@ -147,7 +162,7 @@ function IntroPage({ onEnter }) {
           <div>VOID_LINK: <span style={{color: '#0066CC'}}>STABLE</span></div>
           <div>CONSCIOUSNESS: <span style={{color: '#0066CC'}}>READY</span></div>
         </div>
-        
+
         <button
           onClick={handleButtonClick}
           style={buttonStyle}
@@ -156,13 +171,11 @@ function IntroPage({ onEnter }) {
         >
           LET GO OF PREDICTION
         </button>
-        
-        {/* Warning text */}
+
         <div style={{
           marginTop: '30px',
           fontSize: '0.3em',
           color: '#4A4A4A',
-          textShadow: '0 1px 1px rgba(255,255,255,0.8)',
           textAlign: 'center',
           lineHeight: '1.4'
         }}>
