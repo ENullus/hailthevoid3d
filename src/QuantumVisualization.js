@@ -13,7 +13,7 @@ const DarkMatterBlob = forwardRef(({
   const time = useRef(0);
 
   const geometry = useMemo(() => {
-    const geo = new THREE.IcosahedronGeometry(scale, 5); // Higher detail for a smoother, more defined shape
+    const geo = new THREE.IcosahedronGeometry(scale, 3); // Reduced detail to 3 for smoother low-poly
     const positions = geo.attributes.position.array;
     geo.userData.originalPositions = new Float32Array(positions);
     return geo;
@@ -21,46 +21,22 @@ const DarkMatterBlob = forwardRef(({
 
   const material = useMemo(() => {
     return new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(0x00B7EB), // Bright blue base
-      metalness: 0.85,
-      roughness: 0.1,
+      color: new THREE.Color(0x00B7EB), // Blue tone
+      metalness: 0.95,
+      roughness: 0.03, // Slightly smoother
       clearcoat: 1.0,
-      clearcoatRoughness: 0.05,
+      clearcoatRoughness: 0.0,
       transparent: true,
-      opacity: opacity * 0.98, // Nearly solid for prominence
-      emissive: new THREE.Color(0x00B7EB).multiplyScalar(3.0), // Intense glow
-      emissiveIntensity: 0.8, // Strong radiant effect
-      onBeforeCompile: (shader) => {
-        shader.uniforms.uTime = { value: 0 };
-        shader.vertexShader = `
-          uniform float uTime;
-          ${shader.vertexShader}
-        `.replace(
-          '#include <begin_vertex>',
-          `
-            #include <begin_vertex>
-            float rim = 1.0 - dot(normal, viewDirection);
-            vColor = vec3(0.0, 0.8, 1.2) * rim * 1.5; // Bold rim lighting
-          `
-        );
-        shader.fragmentShader = `
-          varying vec3 vColor;
-          ${shader.fragmentShader}
-        `.replace(
-          '#include <dithering_fragment>',
-          `
-            #include <dithering_fragment>
-            gl_FragColor.rgb += vColor * 0.7; // Enhanced edge glow
-          `
-        );
-      }
+      opacity: opacity * 0.9,
+      emissive: new THREE.Color(0x00B7EB), // Blue emissive
+      emissiveIntensity: 0.2 // Subtle glow
     });
   }, [opacity]);
 
   useFrame((state, delta) => {
     if (!meshRef.current) return;
 
-    time.current += delta * 0.4; // Slower, more deliberate motion
+    time.current += delta;
     const t = time.current;
 
     const positions = meshRef.current.geometry.attributes.position.array;
@@ -71,34 +47,34 @@ const DarkMatterBlob = forwardRef(({
       const y = original[i + 1];
       const z = original[i + 2];
 
-      const chaosFactor = Math.sin(t * 6 + x * 12 + y * 12 + z * 12) * 0.06; // Gentler deformation
-      const chaosX = Math.sin(t * 2 + y * 6) * chaosFactor;
-      const chaosY = Math.cos(t * 2.3 + z * 6) * chaosFactor;
-      const chaosZ = Math.sin(t * 2.6 + x * 6) * chaosFactor;
+      const chaosFactor = Math.sin(t * 10 + x * 20 + y * 20 + z * 20) * 0.1; // Reduced for smoother motion
+      const chaosX = Math.sin(t * 3 + y * 10) * chaosFactor;
+      const chaosY = Math.cos(t * 3.5 + z * 10) * chaosFactor;
+      const chaosZ = Math.sin(t * 4 + x * 10) * chaosFactor;
 
       positions[i] = x + chaosX;
       positions[i + 1] = y + chaosY;
       positions[i + 2] = z + chaosZ;
 
       if (isFlowing && flowProgress > 0) {
-        const morphIntensity = Math.sin(flowProgress * Math.PI * 1.5) * 0.1; // Smoother flow
-        positions[i] += flowDirection.x * morphIntensity;
-        positions[i + 1] += flowDirection.y * morphIntensity;
-        positions[i + 2] += flowDirection.z * morphIntensity;
+        const morphIntensity = Math.sin(flowProgress * Math.PI * 4) * 0.2; // Softer morph
+        positions[i] *= (1 + morphIntensity);
+        positions[i + 1] *= (1 + morphIntensity);
+        positions[i + 2] *= (1 + morphIntensity);
       }
     }
 
     meshRef.current.geometry.attributes.position.needsUpdate = true;
     meshRef.current.geometry.computeVertexNormals();
 
-    meshRef.current.rotation.x += delta * 0.1; // Very slow rotation
-    meshRef.current.rotation.y += delta * 0.15;
-    meshRef.current.rotation.z += delta * 0.05;
+    meshRef.current.rotation.x += delta * 0.2; // Slower rotation
+    meshRef.current.rotation.y += delta * 0.3;
+    meshRef.current.rotation.z += delta * 0.1;
   });
 
   return (
     <group ref={ref}>
-      <mesh ref={meshRef} geometry={geometry} material={material} castShadow receiveShadow />
+      <mesh ref={meshRef} geometry={geometry} material={material} castShadow />
     </group>
   );
 });
