@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const sectionContents = {
   about: {
@@ -132,6 +132,14 @@ function useCMSContent(sectionId) {
 
 function SectionContent({ section, onReset, onMediaPlayingChange }) {
   const { content: cmsContent, loading: cmsLoading, error: cmsError } = useCMSContent(section?.id);
+  
+  // Form states
+  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+  const [submitForm, setSubmitForm] = useState({ name: '', email: '', artworkLink: '', message: '', artworkFile: null });
+  const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [submitSubmitted, setSubmitSubmitted] = useState(false);
+  const [contactSubmitting, setContactSubmitting] = useState(false);
+  const [submitSubmitting, setSubmitSubmitting] = useState(false);
 
   useEffect(() => {
     if (typeof onMediaPlayingChange === 'function') {
@@ -146,6 +154,73 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
   if (!section || !currentSectionData) {
     return null;
   }
+
+  // Contact form handler
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setContactSubmitting(true);
+
+    const formData = new FormData();
+    formData.append('form-name', 'contact');
+    formData.append('name', contactForm.name);
+    formData.append('email', contactForm.email);
+    formData.append('message', contactForm.message);
+
+    try {
+      const response = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formData).toString()
+      });
+
+      if (response.ok) {
+        setContactSubmitted(true);
+        setContactForm({ name: '', email: '', message: '' });
+      } else {
+        throw new Error('Form submission failed');
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      alert('Transmission failed. Please try again.');
+    } finally {
+      setContactSubmitting(false);
+    }
+  };
+
+  // Submission form handler
+  const handleSubmitSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitSubmitting(true);
+
+    const formData = new FormData();
+    formData.append('form-name', 'submission');
+    formData.append('name', submitForm.name);
+    formData.append('email', submitForm.email);
+    formData.append('artworkLink', submitForm.artworkLink);
+    formData.append('message', submitForm.message);
+    if (submitForm.artworkFile) {
+      formData.append('artworkFile', submitForm.artworkFile);
+    }
+
+    try {
+      const response = await fetch('/', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        setSubmitSubmitted(true);
+        setSubmitForm({ name: '', email: '', artworkLink: '', message: '', artworkFile: null });
+      } else {
+        throw new Error('Form submission failed');
+      }
+    } catch (error) {
+      console.error('Submission form error:', error);
+      alert('Transmission failed. Please try again.');
+    } finally {
+      setSubmitSubmitting(false);
+    }
+  };
 
   const renderMediaPlayer = (type, src, title = '') => {
     const MediaElement = type === 'audio' ? 'audio' : 'video';
@@ -708,428 +783,649 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
       </div>
     );
   } else if (section.id === 'submit') {
-    const [formData, setFormData] = useState({ name: '', email: '', artworkLink: '', message: '' });
-    const [submitted, setSubmitted] = useState(false);
-    const [file, setFile] = useState(null);
-
-    const handleChange = (e) => {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleFileChange = (e) => {
-      setFile(e.target.files[0]);
-    };
-
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-
-      if (!formData.name || !formData.email || (!formData.artworkLink && !file)) {
-        alert('Please fill out all required fields and provide an artwork link or file.');
-        return;
-      }
-
-      const formDataToSubmit = new FormData();
-      formDataToSubmit.append('form-name', 'submission');
-      formDataToSubmit.append('name', formData.name);
-      formDataToSubmit.append('email', formData.email);
-      formDataToSubmit.append('artworkLink', formData.artworkLink);
-      formDataToSubmit.append('message', formData.message);
-      if (file) {
-        formDataToSubmit.append('file', file);
-      }
-
-      try {
-        const response = await fetch('/', {
-          method: 'POST',
-          body: formDataToSubmit
-        });
-        if (response.ok) {
-          setSubmitted(true);
-        } else {
-          throw new Error('Submission failed.');
-        }
-      } catch (error) {
-        alert('Error submitting: ' + error.message);
-      }
-    };
-
-    if (submitted) {
-      return (
+    if (submitSubmitted) {
+      sectionSpecificContent = (
         <div style={{
           padding: '20px',
-          textAlign: 'center',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-          borderRadius: '8px',
-          boxShadow: '0 0 20px rgba(0,0,255,0.2)'
-        }}>
-          <h2 style={{ color: '#1A1A1A', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>Submission Received</h2>
-          <p style={{ color: '#2C2C2C', textShadow: '0 1px 1px rgba(255,255,255,0.8)' }}>Your art has been transmitted to the void. Await resonance.</p>
-          <button onClick={onReset} style={{
-            marginTop: '15px',
-            padding: '10px 20px',
-            background: '#007BFF',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}>Return</button>
-        </div>
-      );
-    }
-
-    sectionSpecificContent = (
-      <div style={{ padding: '20px' }}>
-        <div style={{
-          color: '#2C2C2C',
-          fontSize: '0.9rem',
-          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
-        }}>
-          SUBMISSION PROTOCOL: <span style={{ color: '#0066CC' }}>READY</span>
-        </div>
-
-        <div style={{
-          marginBottom: '20px',
-          padding: '15px',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-          border: '2px solid #808080',
-          borderRadius: '8px',
-          boxShadow: '0 0 20px rgba(0,0,255,0.2)'
+          textAlign: 'center'
         }}>
           <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '5px',
+            background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+            border: '2px solid #808080',
+            borderRadius: '8px',
+            padding: '30px',
+            boxShadow: '0 0 20px rgba(0,0,255,0.2)'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #32CD32, #228B22)',
+              margin: '0 auto 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '24px',
+              color: 'white'
+            }}>
+              ✓
+            </div>
+            <h3 style={{
+              color: '#1A1A1A',
+              marginBottom: '15px',
+              textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+            }}>
+              TRANSMISSION COMPLETE
+            </h3>
+            <p style={{
+              color: '#2C2C2C',
+              fontSize: '1rem',
+              textShadow: '0 1px 1px rgba(255,255,255,0.8)',
+              marginBottom: '20px'
+            }}>
+              Your artistic essence has been absorbed into the void matrix. The collective consciousness will process your submission.
+            </p>
+            <button
+              onClick={() => setSubmitSubmitted(false)}
+              style={{
+                background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 50%, #B8B8B8 100%)',
+                border: '2px solid #808080',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+            boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
+            textShadow: '0 1px 2px rgba(255,255,255,0.8)',
+            transition: 'all 0.3s ease'
+          }}>
+            ✕
+          </button>
+        </div>
+
+        <div style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: '20px',
+          background: 'linear-gradient(145deg, #D0D0D0 0%, #B8B8B8 100%)',
+          animation: 'fadeUpIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.2s backwards'
+        }}>
+          {sectionSpecificContent}
+        </div>
+
+        <div style={{
+          background: 'linear-gradient(145deg, #D8D8D8 0%, #C0C0C0 50%, #A8A8A8 100%)',
+          borderTop: '3px solid #808080',
+          padding: '15px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
+          animation: 'slideInFromRight 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.3s backwards'
+        }}>
+          <div style={{
+            color: '#2C2C2C',
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+          }}>
+            <span>SECTOR: </span>
+            <span style={{ color: '#1A1A1A' }}>{section.id?.toUpperCase()}</span>
+          </div>
+
+          <button onClick={onReset} style={{
+            background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 50%, #B8B8B8 100%)',
+            border: '3px solid #808080',
+            borderRadius: '8px',
+            padding: '12px 25px',
+            color: '#1A1A1A',
+            fontWeight: 'bold',
+            fontSize: '1rem',
+            letterSpacing: '1px',
+            textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.3)',
+            boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}>
+            RETURN TO CONTAINER
+          </button>
+
+          <div style={{
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            background: 'linear-gradient(45deg, #32CD32, #90EE90)',
+            boxShadow: '0 0 10px rgba(50, 205, 50, 0.5), inset 0 1px 2px rgba(255,255,255,0.3)'
+          }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default SectionContent;: 'pointer'
+              }}
+            >
+              SUBMIT ANOTHER
+            </button>
+          </div>
+        </div>
+      );
+    } else {
+      sectionSpecificContent = (
+        <div style={{
+          padding: '20px'
+        }}>
+          <div style={{
             color: '#2C2C2C',
             fontSize: '0.9rem',
             textShadow: '0 1px 1px rgba(255,255,255,0.8)'
           }}>
-            <div><span style={{ color: '#0066CC' }}>001</span> PREPARE_DIGITAL_CONSCIOUSNESS</div>
-            <div><span style={{ color: '#0066CC' }}>002</span> ALIGN_CREATIVE_FREQUENCY</div>
-            <div><span style={{ color: '#0066CC' }}>003</span> INITIATE_TRANSMISSION</div>
+            SUBMISSION PROTOCOL: <span style={{ color: '#0066CC' }}>READY</span>
           </div>
-        </div>
 
-        {cmsContent.length > 0 && (
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{
-              color: '#1A1A1A',
-              marginBottom: '15px',
-              textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
-            }}>Recent Submissions:</h3>
-            {renderContentGrid(cmsContent.slice(0, 3), 'submissions')}
+          <div style={{
+            marginBottom: '20px',
+            padding: '15px',
+            background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+            border: '2px solid #808080',
+            borderRadius: '8px',
+            boxShadow: '0 0 20px rgba(0,0,255,0.2)'
+          }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px',
+              color: '#2C2C2C',
+              fontSize: '0.9rem',
+              textShadow: '0 1px 1px rgba(255,255,255,0.8)'
+            }}>
+              <div>
+                <span style={{ marginRight: '10px', color: '#0066CC' }}>001</span>
+                <span>PREPARE_DIGITAL_CONSCIOUSNESS</span>
+              </div>
+              <div>
+                <span style={{ marginRight: '10px', color: '#0066CC' }}>002</span>
+                <span>ALIGN_CREATIVE_FREQUENCY</span>
+              </div>
+              <div>
+                <span style={{ marginRight: '10px', color: '#0066CC' }}>003</span>
+                <span>INITIATE_TRANSMISSION</span>
+              </div>
+            </div>
           </div>
-        )}
 
-        <p style={{
-          color: '#1A1A1A',
-          fontSize: '1rem',
-          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
-          marginBottom: '20px'
-        }}>
-          Your artistic transmissions must resonate with the void's frequency.
-          Ensure dimensional compatibility before upload.
-        </p>
+          {cmsContent.length > 0 && (
+            <div style={{
+              marginBottom: '20px'
+            }}>
+              <h3 style={{
+                color: '#1A1A1A',
+                marginBottom: '15px',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
+              }}>
+                Recent Submissions:
+              </h3>
+              {renderContentGrid(cmsContent.slice(0, 3), 'submissions')}
+            </div>
+          )}
 
-        <form
-          name="submission"
-          method="POST"
-          data-netlify="true"
-          data-netlify-honeypot="bot-field"
-          onSubmit={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
-        >
-          <input type="hidden" name="form-name" value="submission" />
-          <p hidden>
-            <label>Don’t fill this out: <input name="bot-field" /></label>
+          <p style={{
+            color: '#1A1A1A',
+            fontSize: '1rem',
+            textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
+            marginBottom: '20px'
+          }}>
+            Your artistic transmissions must resonate with the void's frequency.
+            Ensure dimensional compatibility before upload.
           </p>
-          <div>
-            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>ENTITY_DESIGNATION</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#F0F0F0',
-                border: '2px solid #808080',
-                borderRadius: '6px',
-                color: '#1A1A1A',
-                fontWeight: 'bold'
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>RETURN_FREQUENCY</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#F0F0F0',
-                border: '2px solid #808080',
-                borderRadius: '6px',
-                color: '#1A1A1A',
-                fontWeight: 'bold'
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>ARTWORK_LINK</label>
-            <input
-              type="url"
-              name="artworkLink"
-              value={formData.artworkLink}
-              onChange={handleChange}
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#F0F0F0',
-                border: '2px solid #808080',
-                borderRadius: '6px',
-                color: '#1A1A1A',
-                fontWeight: 'bold'
-              }}
-              placeholder="Or upload a file below"
-            />
-          </div>
-          <div>
-            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>UPLOAD_ARTWORK</label>
-            <input
-              type="file"
-              name="file"
-              onChange={handleFileChange}
-              style={{ width: '100%', padding: '12px', background: '#F0F0F0', border: '2px solid #808080', borderRadius: '6px' }}
-            />
-          </div>
-          <div>
-            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>DATA_PACKET</label>
-            <textarea
-              name="message"
-              value={formData.message}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#F0F0F0',
-                border: '2px solid #808080',
-                borderRadius: '6px',
+
+          <form onSubmit={handleSubmitSubmit} data-netlify="true" name="submission">
+            <input type="hidden" name="form-name" value="submission" />
+            
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
                 color: '#1A1A1A',
                 fontWeight: 'bold',
-                minHeight: '100px'
+                marginBottom: '5px',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+              }}>
+                ARTIST_DESIGNATION
+              </label>
+              <input
+                type="text"
+                value={submitForm.name}
+                onChange={(e) => setSubmitForm({...submitForm, name: e.target.value})}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                  border: '2px solid #808080',
+                  borderRadius: '6px',
+                  color: '#1A1A1A',
+                  fontWeight: 'bold',
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                marginBottom: '5px',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+              }}>
+                RETURN_FREQUENCY
+              </label>
+              <input
+                type="email"
+                value={submitForm.email}
+                onChange={(e) => setSubmitForm({...submitForm, email: e.target.value})}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                  border: '2px solid #808080',
+                  borderRadius: '6px',
+                  color: '#1A1A1A',
+                  fontWeight: 'bold',
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                marginBottom: '5px',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+              }}>
+                ARTWORK_PORTAL (URL)
+              </label>
+              <input
+                type="url"
+                value={submitForm.artworkLink}
+                onChange={(e) => setSubmitForm({...submitForm, artworkLink: e.target.value})}
+                placeholder="https://your-portfolio.com/artwork"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                  border: '2px solid #808080',
+                  borderRadius: '6px',
+                  color: '#1A1A1A',
+                  fontWeight: 'bold',
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                marginBottom: '5px',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+              }}>
+                ARTWORK_FILE (Optional)
+              </label>
+              <input
+                type="file"
+                onChange={(e) => setSubmitForm({...submitForm, artworkFile: e.target.files[0]})}
+                accept="image/*,video/*,audio/*,.pdf"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                  border: '2px solid #808080',
+                  borderRadius: '6px',
+                  color: '#1A1A1A',
+                  fontWeight: 'bold',
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                marginBottom: '5px',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+              }}>
+                TRANSMISSION_DATA
+              </label>
+              <textarea
+                value={submitForm.message}
+                onChange={(e) => setSubmitForm({...submitForm, message: e.target.value})}
+                rows="4"
+                required
+                placeholder="Describe your artistic vision, medium, inspiration from the void..."
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                  border: '2px solid #808080',
+                  borderRadius: '6px',
+                  color: '#1A1A1A',
+                  fontWeight: 'bold',
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitSubmitting}
+              style={{
+                background: submitSubmitting 
+                  ? 'linear-gradient(145deg, #B0B0B0 0%, #A0A0A0 100%)' 
+                  : 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+                border: '2px solid #808080',
+                borderRadius: '8px',
+                padding: '12px 25px',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
+                boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
+                cursor: submitSubmitting ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease'
               }}
-            />
-          </div>
-          <button
-            type="submit"
-            style={{
-              padding: '12px 25px',
-              background: '#007BFF',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            TRANSMIT
-          </button>
-        </form>
-      </div>
-    );
-  } else if (section.id === 'contact') {
-    const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-    const [submitted, setSubmitted] = useState(false);
-
-    const handleChange = (e) => {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-
-      if (!formData.name || !formData.email || !formData.message) {
-        alert('Please fill out all fields.');
-        return;
-      }
-
-      const formDataToSubmit = new FormData();
-      formDataToSubmit.append('form-name', 'contact');
-      formDataToSubmit.append('name', formData.name);
-      formDataToSubmit.append('email', formData.email);
-      formDataToSubmit.append('message', formData.message);
-
-      try {
-        const response = await fetch('/', {
-          method: 'POST',
-          body: formDataToSubmit
-        });
-        if (response.ok) {
-          setSubmitted(true);
-        } else {
-          throw new Error('Submission failed.');
-        }
-      } catch (error) {
-        alert('Error submitting: ' + error.message);
-      }
-    };
-
-    if (submitted) {
-      return (
-        <div style={{
-          padding: '20px',
-          textAlign: 'center',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-          borderRadius: '8px',
-          boxShadow: '0 0 20px rgba(0,0,255,0.2)'
-        }}>
-          <h2 style={{ color: '#1A1A1A', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>Message Sent</h2>
-          <p style={{ color: '#2C2C2C', textShadow: '0 1px 1px rgba(255,255,255,0.8)' }}>We’ll connect with you soon.</p>
-          <button onClick={onReset} style={{
-            marginTop: '15px',
-            padding: '10px 20px',
-            background: '#007BFF',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}>Return</button>
+            >
+              {submitSubmitting ? 'TRANSMITTING...' : 'OPEN PORTAL'}
+            </button>
+          </form>
         </div>
       );
     }
-
-    sectionSpecificContent = (
-      <div style={{ padding: '20px' }}>
+  } else if (section.id === 'contact') {
+    if (contactSubmitted) {
+      sectionSpecificContent = (
         <div style={{
-          color: '#2C2C2C',
-          fontSize: '0.9rem',
-          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
+          padding: '20px',
+          textAlign: 'center'
         }}>
-          COMMUNICATION ARRAY: <span style={{ color: '#0066CC' }}>ONLINE</span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '5px', marginBottom: '20px' }}>
-          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #00B7EB, #000)', borderRadius: '2px' }} />
-          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #00B7EB, #000)', borderRadius: '2px' }} />
-          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #00B7EB, #000)', borderRadius: '2px' }} />
-          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #333, #000)', borderRadius: '2px' }} />
-          <div style={{ width: '8px', height: '20px', background: 'linear-gradient(180deg, #333, #000)', borderRadius: '2px' }} />
-        </div>
-
-        <p style={{
-          color: '#1A1A1A',
-          fontSize: '1rem',
-          textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
-          marginBottom: '20px'
-        }}>
-          Establish quantum entanglement. Your transmission will echo through the void.
-        </p>
-
-        <form
-          name="contact"
-          method="POST"
-          data-netlify="true"
-          data-netlify-honeypot="bot-field"
-          onSubmit={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
-        >
-          <input type="hidden" name="form-name" value="contact" />
-          <p hidden>
-            <label>Don’t fill this out: <input name="bot-field" /></label>
-          </p>
-          <div>
-            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>ENTITY_DESIGNATION</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
+          <div style={{
+            background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+            border: '2px solid #808080',
+            borderRadius: '8px',
+            padding: '30px',
+            boxShadow: '0 0 20px rgba(0,0,255,0.2)'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #32CD32, #228B22)',
+              margin: '0 auto 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '24px',
+              color: 'white'
+            }}>
+              ✓
+            </div>
+            <h3 style={{
+              color: '#1A1A1A',
+              marginBottom: '15px',
+              textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+            }}>
+              QUANTUM ENTANGLEMENT ESTABLISHED
+            </h3>
+            <p style={{
+              color: '#2C2C2C',
+              fontSize: '1rem',
+              textShadow: '0 1px 1px rgba(255,255,255,0.8)',
+              marginBottom: '20px'
+            }}>
+              Your transmission has propagated through the void. The collective will respond when the stars align.
+            </p>
+            <button
+              onClick={() => setContactSubmitted(false)}
               style={{
-                width: '100%',
-                padding: '12px',
-                background: '#F0F0F0',
+                background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 50%, #B8B8B8 100%)',
                 border: '2px solid #808080',
-                borderRadius: '6px',
-                color: '#1A1A1A',
-                fontWeight: 'bold'
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>RETURN_FREQUENCY</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#F0F0F0',
-                border: '2px solid #808080',
-                borderRadius: '6px',
-                color: '#1A1A1A',
-                fontWeight: 'bold'
-              }}
-            />
-          </div>
-          <div>
-            <label style={{ color: '#1A1A1A', fontWeight: 'bold', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>DATA_PACKET</label>
-            <textarea
-              name="message"
-              value={formData.message}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#F0F0F0',
-                border: '2px solid #808080',
-                borderRadius: '6px',
+                borderRadius: '8px',
+                padding: '10px 20px',
                 color: '#1A1A1A',
                 fontWeight: 'bold',
-                minHeight: '100px'
+                cursor: 'pointer'
               }}
-            />
+            >
+              SEND ANOTHER
+            </button>
           </div>
-          <button
-            type="submit"
-            style={{
-              padding: '12px 25px',
-              background: '#007BFF',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            TRANSMIT
-          </button>
-        </form>
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginTop: '15px',
-          color: '#2C2C2C',
-          fontSize: '0.9rem',
-          textShadow: '0 1px 1px rgba(255,255,255,0.8)'
-        }}>
-          <div style={{ marginRight: '10px' }}>⟨⟩</div>
-          <span>Third-party quantum relay active</span>
         </div>
-      </div>
-    );
+      );
+    } else {
+      sectionSpecificContent = (
+        <div style={{
+          padding: '20px'
+        }}>
+          <div style={{
+            color: '#2C2C2C',
+            fontSize: '0.9rem',
+            textShadow: '0 1px 1px rgba(255,255,255,0.8)'
+          }}>
+            COMMUNICATION ARRAY: <span style={{ color: '#0066CC' }}>ONLINE</span>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            gap: '5px',
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              width: '8px',
+              height: '20px',
+              background: 'linear-gradient(180deg, #00B7EB, #000)',
+              borderRadius: '2px'
+            }} />
+            <div style={{
+              width: '8px',
+              height: '20px',
+              background: 'linear-gradient(180deg, #00B7EB, #000)',
+              borderRadius: '2px'
+            }} />
+            <div style={{
+              width: '8px',
+              height: '20px',
+              background: 'linear-gradient(180deg, #00B7EB, #000)',
+              borderRadius: '2px'
+            }} />
+            <div style={{
+              width: '8px',
+              height: '20px',
+              background: 'linear-gradient(180deg, #333, #000)',
+              borderRadius: '2px'
+            }} />
+            <div style={{
+              width: '8px',
+              height: '20px',
+              background: 'linear-gradient(180deg, #333, #000)',
+              borderRadius: '2px'
+            }} />
+          </div>
+
+          <p style={{
+            color: '#1A1A1A',
+            fontSize: '1rem',
+            textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
+            marginBottom: '20px'
+          }}>
+            Establish quantum entanglement. Your transmission will echo through the void.
+          </p>
+
+          <form onSubmit={handleContactSubmit} data-netlify="true" name="contact">
+            <input type="hidden" name="form-name" value="contact" />
+            
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                marginBottom: '5px',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
+              }}>
+                ENTITY_DESIGNATION
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  value={contactForm.name}
+                  onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                    border: '2px solid #808080',
+                    borderRadius: '6px',
+                    color: '#1A1A1A',
+                    fontWeight: 'bold',
+                    boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                  }}
+                />
+                <div style={{
+                  position: 'absolute',
+                  top: '0',
+                  left: '0',
+                  width: '100%',
+                  height: '2px',
+                  background: 'linear-gradient(90deg, transparent, #00B7EB, transparent)',
+                  animation: 'scan 2s infinite'
+                }} />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                marginBottom: '5px',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
+              }}>
+                RETURN_FREQUENCY
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="email"
+                  value={contactForm.email}
+                  onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                    border: '2px solid #808080',
+                    borderRadius: '6px',
+                    color: '#1A1A1A',
+                    fontWeight: 'bold',
+                    boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
+                  }}
+                />
+                <div style={{
+                  position: 'absolute',
+                  top: '0',
+                  left: '0',
+                  width: '100%',
+                  height: '2px',
+                  background: 'linear-gradient(90deg, transparent, #00B7EB, transparent)',
+                  animation: 'scan 2s infinite'
+                }} />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                marginBottom: '5px',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)'
+              }}>
+                DATA_PACKET
+              </label>
+              <div style={{ position: 'relative' }}>
+                <textarea
+                  value={contactForm.message}
+                  onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                  rows="6"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: 'linear-gradient(145deg, #F0F0F0 0%, #E0E0E0 50%, #D0D0D0 100%)',
+                    border: '2px solid #808080',
+                    borderRadius: '6px',
+                    color: '#1A1A1A',
+                    fontWeight: 'bold',
+                    boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
+                    resize: 'vertical'
+                  }}
+                />
+                <div style={{
+                  position: 'absolute',
+                  top: '0',
+                  left: '0',
+                  width: '100%',
+                  height: '2px',
+                  background: 'linear-gradient(90deg, transparent, #00B7EB, transparent)',
+                  animation: 'scan 2s infinite'
+                }} />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={contactSubmitting}
+              style={{
+                background: contactSubmitting 
+                  ? 'linear-gradient(145deg, #B0B0B0 0%, #A0A0A0 100%)' 
+                  : 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+                border: '2px solid #808080',
+                borderRadius: '8px',
+                padding: '12px 25px',
+                color: '#1A1A1A',
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.2)',
+                boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
+                cursor: contactSubmitting ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {contactSubmitting ? 'TRANSMITTING...' : 'TRANSMIT'}
+            </button>
+          </form>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginTop: '15px',
+            color: '#2C2C2C',
+            fontSize: '0.9rem',
+            textShadow: '0 1px 1px rgba(255,255,255,0.8)'
+          }}>
+            <div style={{ marginRight: '10px' }}>⟨⟩</div>
+            <span>Third-party quantum relay active</span>
+          </div>
+        </div>
+      );
+    }
   }
 
   return (
@@ -1262,73 +1558,4 @@ function SectionContent({ section, onReset, onMediaPlayingChange }) {
             color: '#1A1A1A',
             fontSize: '1.2rem',
             fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
-            textShadow: '0 1px 2px rgba(255,255,255,0.8)',
-            transition: 'all 0.3s ease'
-          }}>
-            ✕
-          </button>
-        </div>
-
-        <div style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: '20px',
-          background: 'linear-gradient(145deg, #D0D0D0 0%, #B8B8B8 100%)',
-          animation: 'fadeUpIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.2s backwards'
-        }}>
-          {sectionSpecificContent}
-        </div>
-
-        <div style={{
-          background: 'linear-gradient(145deg, #D8D8D8 0%, #C0C0C0 50%, #A8A8A8 100%)',
-          borderTop: '3px solid #808080',
-          padding: '15px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
-          animation: 'slideInFromRight 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.3s backwards'
-        }}>
-          <div style={{
-            color: '#2C2C2C',
-            fontSize: '0.9rem',
-            fontWeight: 'bold',
-            textShadow: '0 1px 2px rgba(255,255,255,0.8)'
-          }}>
-            <span>SECTOR: </span>
-            <span style={{ color: '#1A1A1A' }}>{section.id?.toUpperCase()}</span>
-          </div>
-
-          <button onClick={onReset} style={{
-            background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 50%, #B8B8B8 100%)',
-            border: '3px solid #808080',
-            borderRadius: '8px',
-            padding: '12px 25px',
-            color: '#1A1A1A',
-            fontWeight: 'bold',
-            fontSize: '1rem',
-            letterSpacing: '1px',
-            textShadow: '0 1px 2px rgba(255,255,255,0.8), 0 -1px 1px rgba(0,0,0,0.3)',
-            boxShadow: '0 0 15px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease'
-          }}>
-            RETURN TO CONTAINER
-          </button>
-
-          <div style={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            background: 'linear-gradient(45deg, #32CD32, #90EE90)',
-            boxShadow: '0 0 10px rgba(50, 205, 50, 0.5), inset 0 1px 2px rgba(255,255,255,0.3)'
-          }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default SectionContent
+            cursor
