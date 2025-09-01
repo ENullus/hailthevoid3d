@@ -436,11 +436,8 @@ export default function Scene() {
       setMorphProgress(prev => {
         const next = prev + 0.02;
         if (next >= 1) {
-          // Cube fully morphed, now transition to quantum blob
           setCubeVisible(false);
           setDarkMatterVisible(true);
-          
-          // Start quantum blob animation
           const quantumAnimate = () => {
             setDarkMatterProgress(prev => {
               const next = prev + 0.015;
@@ -453,7 +450,6 @@ export default function Scene() {
             });
           };
           quantumAnimate();
-          
           return 1;
         }
         requestAnimationFrame(morphAnimate);
@@ -503,7 +499,6 @@ export default function Scene() {
     }
     setRealityTears(tears);
 
-    // Start the morphing
     morphAnimate();
 
     setTimeout(() => setFragments([]), 2000);
@@ -515,21 +510,20 @@ export default function Scene() {
     setBinauralPaused(false);
     setVoidRipples([]);
     setRealityTears([]);
+    setFragments([]);
 
     if (binauralAudioRef.current && performanceSettings.enableBinaural) {
       binauralAudioRef.current.play().catch(e => console.error("Error resuming binaural audio:", e));
     }
 
-    // Reset animation - quantum blob shrinks back
     const animate = () => {
       setDarkMatterProgress(prev => {
-        const next = prev - 0.015;
+        const next = prev - 0.02; // Faster reset
         if (next <= 0) {
-          // When blob is gone, show cube and reset states
           setDarkMatterVisible(false);
           setActiveSection(null);
           setMorphProgress(0);
-          setCubeVisible(true);
+          setCubeVisible(true); // Force cube visibility
           return 0;
         }
         requestAnimationFrame(animate);
@@ -605,7 +599,7 @@ export default function Scene() {
               <QuantumVisualization
                 position={[0, 0, 0]}
                 scale={1.2 - darkMatterProgress * 0.4}
-                opacity={1}
+                opacity={1 - darkMatterProgress} // Fade out as it returns
                 flowDirection={new THREE.Vector3(...activeSection.targetPos).normalize()}
                 isFlowing={true}
                 flowProgress={darkMatterProgress}
