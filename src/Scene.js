@@ -325,7 +325,7 @@ function MorphingCube({ onFaceClick, visible, morphProgress = 0, targetSection }
   };
 
   return (
-    <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0, 0, 0]} visible={visible}>
+    <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0, 0, 0]} visible={visible} key={visible ? "cube" : "hidden"}>
       <boxGeometry args={[2, 2, 2]} />
     </mesh>
   );
@@ -360,6 +360,9 @@ function CameraController({ darkMatterProgress, targetPos }) {
       const cameraPos = currentPos.clone().add(new THREE.Vector3(3, 3, 3));
       camera.position.lerp(cameraPos, 0.07);
       camera.lookAt(currentPos);
+    } else {
+      camera.position.set(5, 5, 5); // Reset camera to default on reset
+      camera.lookAt(0, 0, 0);
     }
   });
   return null;
@@ -431,7 +434,6 @@ export default function Scene() {
 
     setActiveSection(section);
 
-    // Start seamless morphing sequence
     const morphAnimate = () => {
       setMorphProgress(prev => {
         const next = prev + 0.02;
@@ -457,7 +459,6 @@ export default function Scene() {
       });
     };
 
-    // Create fragments during morph
     const frags = [];
     for (let i = 0; i < performanceSettings.maxFragments; i++) {
       frags.push({
@@ -470,7 +471,6 @@ export default function Scene() {
     }
     setFragments(frags);
 
-    // Create ripples
     const ripples = [];
     for (let i = 0; i < performanceSettings.maxRipples; i++) {
       ripples.push({
@@ -487,7 +487,6 @@ export default function Scene() {
     }
     setVoidRipples(ripples);
 
-    // Create reality tears
     const tears = [];
     for (let i = 0; i < 2; i++) {
       tears.push({
@@ -511,26 +510,15 @@ export default function Scene() {
     setVoidRipples([]);
     setRealityTears([]);
     setFragments([]);
+    setDarkMatterVisible(false);
+    setActiveSection(null);
+    setMorphProgress(0);
+    setCubeVisible(true); // Immediate state reset
+    setDarkMatterProgress(0); // Force reset animation state
 
     if (binauralAudioRef.current && performanceSettings.enableBinaural) {
       binauralAudioRef.current.play().catch(e => console.error("Error resuming binaural audio:", e));
     }
-
-    const animate = () => {
-      setDarkMatterProgress(prev => {
-        const next = prev - 0.02; // Faster reset
-        if (next <= 0) {
-          setDarkMatterVisible(false);
-          setActiveSection(null);
-          setMorphProgress(0);
-          setCubeVisible(true); // Force cube visibility
-          return 0;
-        }
-        requestAnimationFrame(animate);
-        return next;
-      });
-    };
-    animate();
   }, [performanceSettings.enableBinaural]);
 
   const handleMediaPlayingChange = useCallback((isPlaying) => {
@@ -599,7 +587,7 @@ export default function Scene() {
               <QuantumVisualization
                 position={[0, 0, 0]}
                 scale={1.2 - darkMatterProgress * 0.4}
-                opacity={1 - darkMatterProgress} // Fade out as it returns
+                opacity={1 - darkMatterProgress}
                 flowDirection={new THREE.Vector3(...activeSection.targetPos).normalize()}
                 isFlowing={true}
                 flowProgress={darkMatterProgress}
