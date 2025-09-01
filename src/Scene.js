@@ -6,20 +6,20 @@ import * as THREE from 'three';
 import SectionContent from './SectionContent';
 import QuantumVisualization from './QuantumVisualization';
 
+// ---------------- sections ----------------
 const sections = [
-  { id: 'music',  name: "FREQUENCIES",  materialProps: { color: "#C0C0C0", metalness: 1.0, roughness: 0.1, emissive: "#E0E0E0" }, targetPos: [ 4,  0,  0] },
-  { id: 'art',    name: "DISRUPTIONS",  materialProps: { color: "#B8B8B8", metalness: 1.0, roughness: 0.05, emissive: "#D3D3D3" }, targetPos: [-4,  0,  0] },
-  { id: 'about',  name: "HAIL THE VOID",materialProps: { color: "#D3D3D3", metalness: 1.0, roughness: 0.1, emissive: "#F0F0F0" }, targetPos: [ 0,  4,  0] },
-  { id: 'submit', name: "SHADOWS",      materialProps: { color: "#A9A9A9", metalness: 1.0, roughness: 0.15, emissive: "#C0C0C0" }, targetPos: [ 0, -4,  0] },
-  { id: 'contact',name: "COLLAPSE",     materialProps: { color: "#BEBEBE", metalness: 1.0, roughness: 0.08, emissive: "#D8D8D8" }, targetPos: [ 0,  0,  4] },
-  { id: 'video',  name: "Video Streams",materialProps: { color: "#E0E0E0", metalness: 1.0, roughness: 0.05, emissive: "#F5F5F5" }, targetPos: [ 0,  0, -4], disabled: false }
+  { id: 'music',  name: "FREQUENCIES",   materialProps: { color: "#C0C0C0", metalness: 1.0, roughness: 0.1,  emissive: "#E0E0E0" }, targetPos: [ 4,  0,  0] },
+  { id: 'art',    name: "DISRUPTIONS",   materialProps: { color: "#B8B8B8", metalness: 1.0, roughness: 0.05, emissive: "#D3D3D3" }, targetPos: [-4,  0,  0] },
+  { id: 'about',  name: "HAIL THE VOID", materialProps: { color: "#D3D3D3", metalness: 1.0, roughness: 0.1,  emissive: "#F0F0F0" }, targetPos: [ 0,  4,  0] },
+  { id: 'submit', name: "SHADOWS",       materialProps: { color: "#A9A9A9", metalness: 1.0, roughness: 0.15, emissive: "#C0C0C0" }, targetPos: [ 0, -4,  0] },
+  { id: 'contact',name: "COLLAPSE",      materialProps: { color: "#BEBEBE", metalness: 1.0, roughness: 0.08, emissive: "#D8D8D8" }, targetPos: [ 0,  0,  4] },
+  { id: 'video',  name: "Video Streams", materialProps: { color: "#E0E0E0", metalness: 1.0, roughness: 0.05, emissive: "#F5F5F5" }, targetPos: [ 0,  0, -4], disabled: false }
 ];
 
-// ---------- helpers ----------
+// ---------------- helpers ----------------
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const easeInOut = (t) => t * t * (3 - 2 * t); // smoothstep
 
-// one tiny tween util (time-based, requestAnimationFrame, no deps)
 function tween({ from, to, duration = 800, easing = easeInOut, onUpdate, onComplete }) {
   const start = performance.now();
   let raf;
@@ -27,14 +27,14 @@ function tween({ from, to, duration = 800, easing = easeInOut, onUpdate, onCompl
     const t = clamp01((now - start) / duration);
     const v = from + (to - from) * easing(t);
     onUpdate?.(v);
-    if (t < 1) { raf = requestAnimationFrame(loop); }
+    if (t < 1) raf = requestAnimationFrame(loop);
     else { onUpdate?.(to); onComplete?.(); }
   };
   raf = requestAnimationFrame(loop);
   return () => cancelAnimationFrame(raf);
 }
 
-// ---------- device + preview (unchanged) ----------
+// ---------------- device + preview ----------------
 function useDeviceDetection() {
   const [device, setDevice] = useState({ isMobile: false, isTablet: false, isTouch: false });
   useEffect(() => {
@@ -72,20 +72,6 @@ function useAutoPreview() {
     const PREVIEW_DURATION = 30;
     const STATIC_SITE_URL = 'https://hailthevoid.org';
 
-    function schedulePreview() {
-      warningTimerRef.current = setTimeout(() => {
-        setShowWarning(true);
-        setTimeLeft(10);
-        startCountdown();
-      }, TOTAL_TIME - WARNING_TIME);
-
-      timerRef.current = setTimeout(() => {
-        sessionStorage.setItem('voidPreviewShown', 'true');
-        const currentUrl = window.location.href.split('?')[0];
-        const previewUrl = `${STATIC_SITE_URL}?auto=true&duration=${PREVIEW_DURATION}&return=${encodeURIComponent(currentUrl)}`;
-        window.location.href = previewUrl;
-      }, TOTAL_TIME);
-    }
     function startCountdown() {
       countdownRef.current = setInterval(() => {
         setTimeLeft(prev => {
@@ -94,17 +80,31 @@ function useAutoPreview() {
         });
       }, 1000);
     }
-    schedulePreview();
+
+    warningTimerRef.current = setTimeout(() => {
+      setShowWarning(true);
+      setTimeLeft(10);
+      startCountdown();
+    }, TOTAL_TIME - WARNING_TIME);
+
+    timerRef.current = setTimeout(() => {
+      sessionStorage.setItem('voidPreviewShown', 'true');
+      const currentUrl = window.location.href.split('?')[0];
+      const previewUrl = `${STATIC_SITE_URL}?auto=true&duration=${PREVIEW_DURATION}&return=${encodeURIComponent(currentUrl)}`;
+      window.location.href = previewUrl;
+    }, TOTAL_TIME);
+
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, []);
+
   return { showWarning, timeLeft };
 }
 
-// ---------- your FX (mostly unchanged) ----------
+// ---------------- FX bits ----------------
 function MetallicTrail({ position, opacity, scale, delay }) {
   const meshRef = useRef();
   const time = useRef(delay);
@@ -122,7 +122,15 @@ function MetallicTrail({ position, opacity, scale, delay }) {
   return (
     <mesh ref={meshRef} position={position}>
       <sphereGeometry args={[0.3, 16, 16]} />
-      <meshPhysicalMaterial color="#C0C0C0" metalness={1.0} roughness={0.1} transparent opacity={opacity} emissive="#E0E0E0" emissiveIntensity={0.3}/>
+      <meshPhysicalMaterial
+        color="#C0C0C0"
+        metalness={1.0}
+        roughness={0.1}
+        transparent
+        opacity={opacity}
+        emissive="#E0E0E0"
+        emissiveIntensity={0.3}
+      />
     </mesh>
   );
 }
@@ -146,7 +154,13 @@ function MetallicRipple({ origin, scale, opacity }) {
   return (
     <mesh ref={meshRef} position={origin}>
       <ringGeometry args={[0.5, 0.8, 64]} />
-      <meshBasicMaterial color="#C0C0C0" transparent opacity={opacity} side={THREE.DoubleSide} blending={THREE.AdditiveBlending}/>
+      <meshBasicMaterial
+        color="#C0C0C0"
+        transparent
+        opacity={opacity}
+        side={THREE.DoubleSide}
+        blending={THREE.AdditiveBlending}
+      />
     </mesh>
   );
 }
@@ -165,7 +179,7 @@ function MetallicTear({ startPos, endPos, progress }) {
     const positions = new Float32Array(points.length * 3);
     points.forEach((p, i) => {
       if (i / points.length < progress) {
-        positions[i*3] = p.x + (Math.random()-0.5)*0.1;
+        positions[i*3]   = p.x + (Math.random()-0.5)*0.1;
         positions[i*3+1] = p.y + (Math.random()-0.5)*0.1;
         positions[i*3+2] = p.z + (Math.random()-0.5)*0.1;
       }
@@ -253,7 +267,7 @@ function CameraController({ darkMatterProgress, targetPos }) {
   return null;
 }
 
-// ---------- MAIN ----------
+// ---------------- main Scene ----------------
 export default function Scene() {
   const { isMobile, isTablet, isTouch } = useDeviceDetection();
   const { showWarning, timeLeft } = useAutoPreview();
@@ -271,7 +285,6 @@ export default function Scene() {
   const [realityTears, setRealityTears] = useState([]);
   const binauralAudioRef = useRef(null);
 
-  // PERF knobs
   const performanceSettings = useMemo(() => ({
     maxFragments: isMobile ? 4 : 8,
     maxTrails: isMobile ? 2 : 5,
@@ -289,31 +302,27 @@ export default function Scene() {
   useEffect(() => {
     const a = binauralAudioRef.current;
     if (a && performanceSettings.enableBinaural) {
-      a.play().catch(() => {/* autoplay might be blocked */});
+      a.play().catch(() => {});
     }
-    return () => { if (a) a.pause(); };
+    return () => { a && a.pause(); };
   }, [performanceSettings.enableBinaural]);
 
   useEffect(() => {
     const a = binauralAudioRef.current;
     if (!a || !performanceSettings.enableBinaural) return;
     if (mediaIsPlaying || binauralPaused) a.pause();
-    else if (menuVisible || (!darkMatterVisible && !menuVisible)) {
-      a.play().catch(() => {});
-    }
+    else if (menuVisible || (!darkMatterVisible && !menuVisible)) a.play().catch(() => {});
   }, [mediaIsPlaying, menuVisible, darkMatterVisible, performanceSettings.enableBinaural, binauralPaused]);
 
-  // ---------- TRANSITION: cube → blob ----------
+  // ---------- cube → blob ----------
   const handleCubeClick = useCallback((section) => {
     if (!cubeVisible || section.disabled) return;
 
-    // pause binaural for media sections
     if (section.id === 'video' || section.id === 'music') {
       setBinauralPaused(true);
       binauralAudioRef.current?.pause();
     }
 
-    // vfx: fragments / ripples / tears (unchanged)
     const frags = [];
     for (let i = 0; i < performanceSettings.maxFragments; i++) {
       frags.push({
@@ -344,12 +353,11 @@ export default function Scene() {
     }
     setRealityTears(tears);
 
-    // start crossfade/morph
     setActiveSection(section);
-    setDarkMatterVisible(true); // make blob mount
+    setDarkMatterVisible(true);
     setMenuVisible(false);
 
-    // Fade cube from 1→0 while morphing blob 0→1
+    // crossfade + morph
     tween({
       from: cubeOpacity,
       to: 0,
@@ -361,16 +369,15 @@ export default function Scene() {
     tween({
       from: 0,
       to: 1,
-      duration: 1100, // slightly longer than cube fade to feel luxurious
+      duration: 1100,
       onUpdate: (v) => setDarkMatterProgress(v),
       onComplete: () => setTimeout(() => setMenuVisible(true), 400)
     });
 
-    // clean up fragments later
     setTimeout(() => setFragments([]), 1000);
   }, [cubeVisible, cubeOpacity, performanceSettings.maxFragments, performanceSettings.maxRipples]);
 
-  // ---------- TRANSITION: blob → cube ----------
+  // ---------- blob → cube ----------
   const handleReset = useCallback(() => {
     setMenuVisible(false);
     setMediaIsPlaying(false);
@@ -382,7 +389,6 @@ export default function Scene() {
       binauralAudioRef.current.play().catch(() => {});
     }
 
-    // show cube (but start transparent), then fade up while morphing back
     setCubeVisible(true);
 
     tween({
@@ -406,7 +412,7 @@ export default function Scene() {
 
   const handleMediaPlayingChange = useCallback((isPlaying) => setMediaIsPlaying(isPlaying), []);
 
-  // animate tears progress (unchanged)
+  // animate tears progress
   useEffect(() => {
     if (realityTears.length === 0) return;
     let raf;
@@ -424,38 +430,48 @@ export default function Scene() {
     return () => clearTimeout(cleanup);
   }, [voidRipples.length]);
 
-  // a gentle drift for flowDirection so the blob never looks static/circular
+  // living flowDirection wobble so blob never looks perfectly circular
   const flowDirRef = useRef(new THREE.Vector3(1,0,0));
   useFrame(({ clock }) => {
     if (!activeSection) return;
     const t = clock.getElapsedTime();
     const base = new THREE.Vector3(...activeSection.targetPos).normalize();
-    // add tiny orthogonal wobble
     const wobble = new THREE.Vector3(Math.sin(t*0.5)*0.15, Math.cos(t*0.4)*0.1, Math.sin(t*0.3+1.2)*0.12);
     flowDirRef.current.copy(base).add(wobble).normalize();
   });
 
   return (
     <>
+      {/* Gradient backdrop under a truly transparent canvas */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)'
+        }}
+      />
+
       <Canvas
+        gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
         camera={{ position: cameraSettings.position, fov: cameraSettings.fov }}
         style={{
-          position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          position: 'absolute',
+          inset: 0,
+          background: 'transparent', // let gradient show through
           touchAction: 'none'
         }}
+        onCreated={({ gl }) => {
+          gl.outputColorSpace = THREE.SRGBColorSpace;
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.0;
+          if (gl.setClearAlpha) gl.setClearAlpha(0); // transparent clear
+          gl.setClearColor(0x000000, 0);
+        }}
       >
-        {/* lighting — current warm vibe */}
+        {/* current warm lighting (swap for white if you want) */}
         <ambientLight intensity={0.6} color="#F0E68C" />
         <directionalLight position={[5,10,7.5]} intensity={1.2} color="#FFFACD" />
         <directionalLight position={[-5,-5,-5]} intensity={0.8} color="#F5DEB3" />
-
-        {/*
-        // alt: cooler/hopeful-white vibe (swap the three above for this block)
-        <ambientLight intensity={0.35} color="#ffffff" />
-        <directionalLight position={[6,8,6]} intensity={1.3} color="#ffffff" />
-        <hemisphereLight args={['#dfe8ff','#98a0b3',0.5]} />
-        */}
 
         <MinimalCube onFaceClick={handleCubeClick} visible={cubeVisible} opacity={cubeOpacity} />
 
@@ -470,7 +486,7 @@ export default function Scene() {
             ]}>
               <QuantumVisualization
                 position={[0,0,0]}
-                scale={1.15 - darkMatterProgress * 0.35} // keep presence; avoid tiny sphere feel
+                scale={1.15 - darkMatterProgress * 0.35}
                 opacity={1}
                 flowDirection={flowDirRef.current}
                 isFlowing={true}
@@ -478,7 +494,7 @@ export default function Scene() {
               />
             </group>
 
-            {[...Array(performanceSettings.maxTrails)].map((_, i) => (
+            {[...Array(isMobile ? 2 : 5)].map((_, i) => (
               <MetallicTrail
                 key={i}
                 position={[
@@ -494,8 +510,13 @@ export default function Scene() {
           </>
         )}
 
-        {voidRipples.map(r => <MetallicRipple key={r.id} origin={r.origin} scale={r.scale} opacity={r.opacity} />)}
-        {realityTears.map(t => <MetallicTear key={t.id} startPos={t.startPos} endPos={t.endPos} progress={t.progress} />)}
+        {voidRipples.map(r => (
+          <MetallicRipple key={r.id} origin={r.origin} scale={r.scale} opacity={r.opacity} />
+        ))}
+
+        {realityTears.map(t => (
+          <MetallicTear key={t.id} startPos={t.startPos} endPos={t.endPos} progress={t.progress} />
+        ))}
 
         {darkMatterVisible && activeSection && (
           <CameraController darkMatterProgress={darkMatterProgress} targetPos={activeSection.targetPos} />
@@ -514,10 +535,10 @@ export default function Scene() {
       <SectionContent
         section={menuVisible ? activeSection : null}
         onReset={handleReset}
-        onMediaPlayingChange={handleMediaPlayingChange}
+        onMediaPlayingChange={setMediaIsPlaying}
       />
 
-      {performanceSettings.enableBinaural && (
+      {(!isMobile) && (
         <audio ref={binauralAudioRef} loop preload="auto" src="/audio/binaural_loop.mp3" />
       )}
 
@@ -530,13 +551,9 @@ export default function Scene() {
           zIndex: 10000, boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)',
           textShadow: '0 0 5px rgba(0,0,255,0.3)'
         }}>
-          <div style={{ marginBottom: '20px', color: '#2C2C2C', textShadow: '0 0 5px rgba(0,0,255,0.3)' }}>
-            ⚠ INITIATING VOID GLIMPSE ⚠
-          </div>
-          <div style={{ color: '#1A1A1A', textShadow: '0 0 5px rgba(0,0,255,0.3)' }}>
-            Dimensional breach in {timeLeft} seconds...
-          </div>
-          <div style={{ fontSize: '14px', marginTop: '15px', color: '#4A4A4A', fontStyle: 'italic', textShadow: '0 0 5px rgba(0,0,255,0.3)' }}>
+          <div style={{ marginBottom: 20 }}>⚠ INITIATING VOID GLIMPSE ⚠</div>
+          <div>Dimensional breach in {timeLeft} seconds...</div>
+          <div style={{ fontSize: 14, marginTop: 15, color: '#4A4A4A', fontStyle: 'italic' }}>
             Move to cancel
           </div>
         </div>
