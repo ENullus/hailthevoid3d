@@ -24,11 +24,15 @@
     <title>Hail The Void</title>
   </head>
   <body>
-    <form name="contact" netlify netlify-honeypot="bot-field" hidden>
-  <input type="text"   name="name" />
-  <input type="email"  name="email" />
+<!-- Hidden static form to register "submission" with file upload -->
+<form name="submission" netlify netlify-honeypot="bot-field" enctype="multipart/form-data" hidden>
+  <input type="text" name="name" />
+  <input type="email" name="email" />
+  <input type="url" name="artworkLink" />
   <textarea name="message"></textarea>
+  <input type="file" name="artworkFile" />
 </form>
+
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--
