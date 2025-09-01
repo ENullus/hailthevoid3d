@@ -247,7 +247,7 @@ function MetallicTear({ startPos, endPos, progress }) {
 }
 
 // Seamless morphing cube that transforms into quantum blob
-function MorphingCube({ onFaceClick, visible, opacity = 1, morphProgress = 0, targetSection }) {
+function MorphingCube({ onFaceClick, visible, morphProgress = 0, targetSection }) {
   const meshRef = useRef();
   const [iceNormalMap, iceRoughnessMap] = useTexture(['/textures/ice_normal.jpg', '/textures/ice_roughness.jpg']);
 
@@ -263,7 +263,7 @@ function MorphingCube({ onFaceClick, visible, opacity = 1, morphProgress = 0, ta
         normalScale: new THREE.Vector2(1, 1),
         transparent: true,
         transmission: 0.5,
-        opacity: opacity,
+        opacity: 1,
         ior: 1.5,
         thickness: 0.8,
         emissive: new THREE.Color(props.emissive),
@@ -272,7 +272,7 @@ function MorphingCube({ onFaceClick, visible, opacity = 1, morphProgress = 0, ta
         clearcoatRoughness: 0.05
       });
     });
-  }, [opacity, iceNormalMap, iceRoughnessMap]);
+  }, [iceNormalMap, iceRoughnessMap]);
 
   // Seamless morphing animation
   useFrame((state) => {
@@ -370,7 +370,6 @@ export default function Scene() {
   const { showWarning, timeLeft } = useAutoPreview();
 
   const [cubeVisible, setCubeVisible] = useState(true);
-  const [cubeOpacity, setCubeOpacity] = useState(1);
   const [morphProgress, setMorphProgress] = useState(0);
   const [fragments, setFragments] = useState([]);
   const [darkMatterVisible, setDarkMatterVisible] = useState(false);
@@ -602,7 +601,6 @@ export default function Scene() {
         <MorphingCube 
           onFaceClick={handleCubeClick} 
           visible={cubeVisible} 
-          opacity={cubeOpacity} 
           morphProgress={morphProgress}
           targetSection={activeSection}
         />
