@@ -520,12 +520,24 @@ export default function Scene() {
       binauralAudioRef.current.play().catch(e => console.error("Error resuming binaural audio:", e));
     }
 
-    // Reverse the process - quantum blob back to cube
-    const reverseAnimate = () => {
+    // Simple reverse animation that mirrors the original working code
+    const animate = () => {
       setDarkMatterProgress(prev => {
-        const next = prev - 0.02;
+        const next = prev - 0.015;
         if (next <= 0) {
+          // Reset all states to initial cube state
           setDarkMatterVisible(false);
+          setActiveSection(null);
+          setMorphProgress(0);
+          setCubeVisible(true);
+          return 0;
+        }
+        requestAnimationFrame(animate);
+        return next;
+      });
+    };
+    animate();
+  }, [performanceSettings.enableBinaural]););
           setCubeVisible(true);
           setActiveSection(null);
           
