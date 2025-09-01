@@ -520,12 +520,12 @@ export default function Scene() {
       binauralAudioRef.current.play().catch(e => console.error("Error resuming binaural audio:", e));
     }
 
-    // Simple reverse animation that mirrors the original working code
+    // Reset animation - quantum blob shrinks back
     const animate = () => {
       setDarkMatterProgress(prev => {
         const next = prev - 0.015;
         if (next <= 0) {
-          // Reset all states to initial cube state
+          // When blob is gone, show cube and reset states
           setDarkMatterVisible(false);
           setActiveSection(null);
           setMorphProgress(0);
@@ -537,20 +537,6 @@ export default function Scene() {
       });
     };
     animate();
-  }, [performanceSettings.enableBinaural]););
-          setCubeVisible(true);
-          setActiveSection(null);
-          
-          // Reset morph progress back to 0 (fully formed cube)
-          setMorphProgress(0);
-          
-          return 0;
-        }
-        requestAnimationFrame(reverseAnimate);
-        return next;
-      });
-    };
-    reverseAnimate();
   }, [performanceSettings.enableBinaural]);
 
   const handleMediaPlayingChange = useCallback((isPlaying) => {
@@ -565,13 +551,13 @@ export default function Scene() {
           progress: Math.min(tear.progress + 0.03, 1)
         })).filter(tear => tear.progress < 1));
 
-        if (realityTears.length > 0) {
+        if (realityTears.some(t => t.progress < 1)) {
           requestAnimationFrame(animate);
         }
       };
       requestAnimationFrame(animate);
     }
-  }, [realityTears.length]);
+  }, [realityTears]);
 
   useEffect(() => {
     if (voidRipples.length > 0) {
