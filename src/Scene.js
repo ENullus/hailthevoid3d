@@ -1,3 +1,4 @@
+// Scene.js
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, useTexture } from '@react-three/drei';
@@ -6,79 +7,55 @@ import SectionContent from './SectionContent';
 import QuantumVisualization from './QuantumVisualization';
 
 const sections = [
-  {
-    id: 'music',
-    name: "FREQUENCIES",
-    materialProps: { color: "#C0C0C0", metalness: 1.0, roughness: 0.1, emissive: "#E0E0E0" },
-    targetPos: [4, 0, 0]
-  },
-  {
-    id: 'art',
-    name: "DISRUPTIONS",
-    materialProps: { color: "#B8B8B8", metalness: 1.0, roughness: 0.05, emissive: "#D3D3D3" },
-    targetPos: [-4, 0, 0]
-  },
-  {
-    id: 'about',
-    name: "HAIL THE VOID",
-    materialProps: { color: "#D3D3D3", metalness: 1.0, roughness: 0.1, emissive: "#F0F0F0" },
-    targetPos: [0, 4, 0]
-  },
-  {
-    id: 'submit',
-    name: "SHADOWS",
-    materialProps: { color: "#A9A9A9", metalness: 1.0, roughness: 0.15, emissive: "#C0C0C0" },
-    targetPos: [0, -4, 0]
-  },
-  {
-    id: 'contact',
-    name: "COLLAPSE",
-    materialProps: { color: "#BEBEBE", metalness: 1.0, roughness: 0.08, emissive: "#D8D8D8" },
-    targetPos: [0, 0, 4]
-  },
-  {
-    id: 'video',
-    name: "Video Streams",
-    materialProps: {
-      color: "#E0E0E0",
-      metalness: 1.0,
-      roughness: 0.05,
-      emissive: "#F5F5F5"
-    },
-    targetPos: [0, 0, -4],
-    disabled: false
-  }
+  { id: 'music',  name: "FREQUENCIES",  materialProps: { color: "#C0C0C0", metalness: 1.0, roughness: 0.1, emissive: "#E0E0E0" }, targetPos: [ 4,  0,  0] },
+  { id: 'art',    name: "DISRUPTIONS",  materialProps: { color: "#B8B8B8", metalness: 1.0, roughness: 0.05, emissive: "#D3D3D3" }, targetPos: [-4,  0,  0] },
+  { id: 'about',  name: "HAIL THE VOID",materialProps: { color: "#D3D3D3", metalness: 1.0, roughness: 0.1, emissive: "#F0F0F0" }, targetPos: [ 0,  4,  0] },
+  { id: 'submit', name: "SHADOWS",      materialProps: { color: "#A9A9A9", metalness: 1.0, roughness: 0.15, emissive: "#C0C0C0" }, targetPos: [ 0, -4,  0] },
+  { id: 'contact',name: "COLLAPSE",     materialProps: { color: "#BEBEBE", metalness: 1.0, roughness: 0.08, emissive: "#D8D8D8" }, targetPos: [ 0,  0,  4] },
+  { id: 'video',  name: "Video Streams",materialProps: { color: "#E0E0E0", metalness: 1.0, roughness: 0.05, emissive: "#F5F5F5" }, targetPos: [ 0,  0, -4], disabled: false }
 ];
 
-// Device detection hook
+// ---------- helpers ----------
+const clamp01 = (x) => Math.min(1, Math.max(0, x));
+const easeInOut = (t) => t * t * (3 - 2 * t); // smoothstep
+
+// one tiny tween util (time-based, requestAnimationFrame, no deps)
+function tween({ from, to, duration = 800, easing = easeInOut, onUpdate, onComplete }) {
+  const start = performance.now();
+  let raf;
+  const loop = (now) => {
+    const t = clamp01((now - start) / duration);
+    const v = from + (to - from) * easing(t);
+    onUpdate?.(v);
+    if (t < 1) { raf = requestAnimationFrame(loop); }
+    else { onUpdate?.(to); onComplete?.(); }
+  };
+  raf = requestAnimationFrame(loop);
+  return () => cancelAnimationFrame(raf);
+}
+
+// ---------- device + preview (unchanged) ----------
 function useDeviceDetection() {
   const [device, setDevice] = useState({ isMobile: false, isTablet: false, isTouch: false });
-
   useEffect(() => {
     const checkDevice = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      const w = window.innerWidth, h = window.innerHeight;
       const isTouch = 'ontouchstart' in window;
-      const isMobile = width <= 768 || (isTouch && Math.min(width, height) <= 768);
-      const isTablet = !isMobile && width <= 1024 && isTouch;
-
+      const isMobile = w <= 768 || (isTouch && Math.min(w, h) <= 768);
+      const isTablet = !isMobile && w <= 1024 && isTouch;
       setDevice({ isMobile, isTablet, isTouch });
     };
-
     checkDevice();
     window.addEventListener('resize', checkDevice);
     window.addEventListener('orientationchange', checkDevice);
-
     return () => {
       window.removeEventListener('resize', checkDevice);
       window.removeEventListener('orientationchange', checkDevice);
     };
   }, []);
-
   return device;
 }
 
-// Auto-preview hook
 function useAutoPreview() {
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -93,7 +70,6 @@ function useAutoPreview() {
     const TOTAL_TIME = 2 * 60 * 1000;
     const WARNING_TIME = 10 * 1000;
     const PREVIEW_DURATION = 30;
-
     const STATIC_SITE_URL = 'https://hailthevoid.org';
 
     function schedulePreview() {
@@ -110,134 +86,92 @@ function useAutoPreview() {
         window.location.href = previewUrl;
       }, TOTAL_TIME);
     }
-
     function startCountdown() {
       countdownRef.current = setInterval(() => {
         setTimeLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(countdownRef.current);
-            return 0;
-          }
+          if (prev <= 1) { clearInterval(countdownRef.current); return 0; }
           return prev - 1;
         });
       }, 1000);
     }
-
     schedulePreview();
-
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, []);
-
   return { showWarning, timeLeft };
 }
 
-// Metallic Trail Component
+// ---------- your FX (mostly unchanged) ----------
 function MetallicTrail({ position, opacity, scale, delay }) {
   const meshRef = useRef();
   const time = useRef(delay);
-
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      time.current += delta;
-      const t = time.current;
-
-      meshRef.current.position.x = position[0] + Math.sin(t * 0.5) * 0.5;
-      meshRef.current.position.y = position[1] + Math.cos(t * 0.7) * 0.3;
-      meshRef.current.position.z = position[2] + Math.sin(t * 0.3) * 0.4;
-
-      const pulseScale = scale * (1 + Math.sin(t * 2) * 0.2);
-      meshRef.current.scale.setScalar(pulseScale);
-      meshRef.current.material.opacity = opacity * (0.5 + Math.sin(t) * 0.5);
-    }
+  useFrame((_, delta) => {
+    const m = meshRef.current; if (!m) return;
+    time.current += delta;
+    const t = time.current;
+    m.position.x = position[0] + Math.sin(t * 0.5) * 0.5;
+    m.position.y = position[1] + Math.cos(t * 0.7) * 0.3;
+    m.position.z = position[2] + Math.sin(t * 0.3) * 0.4;
+    const pulseScale = scale * (1 + Math.sin(t * 2) * 0.2);
+    m.scale.setScalar(pulseScale);
+    m.material.opacity = opacity * (0.5 + Math.sin(t) * 0.5);
   });
-
   return (
     <mesh ref={meshRef} position={position}>
       <sphereGeometry args={[0.3, 16, 16]} />
-      <meshPhysicalMaterial
-        color="#C0C0C0"
-        metalness={1.0}
-        roughness={0.1}
-        transparent={true}
-        opacity={opacity}
-        emissive="#E0E0E0"
-        emissiveIntensity={0.3}
-      />
+      <meshPhysicalMaterial color="#C0C0C0" metalness={1.0} roughness={0.1} transparent opacity={opacity} emissive="#E0E0E0" emissiveIntensity={0.3}/>
     </mesh>
   );
 }
 
-// Metallic Void Ripple Effect
 function MetallicRipple({ origin, scale, opacity }) {
   const meshRef = useRef();
   const time = useRef(0);
-
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      time.current += delta;
-      const t = time.current;
-
-      meshRef.current.scale.setScalar(scale * (1 + t * 3));
-      meshRef.current.material.opacity = opacity * Math.max(0, 1 - t);
-      meshRef.current.rotation.z = t * 2;
-
-      const positions = meshRef.current.geometry.attributes.position.array;
-      for (let i = 0; i < positions.length; i += 3) {
-        positions[i + 2] = Math.sin(positions[i] * 10 + t * 5) * 0.1;
-      }
-      meshRef.current.geometry.attributes.position.needsUpdate = true;
+  useFrame((_, delta) => {
+    const m = meshRef.current; if (!m) return;
+    time.current += delta;
+    const t = time.current;
+    m.scale.setScalar(scale * (1 + t * 3));
+    m.material.opacity = opacity * Math.max(0, 1 - t);
+    m.rotation.z = t * 2;
+    const positions = m.geometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i += 3) {
+      positions[i + 2] = Math.sin(positions[i] * 10 + t * 5) * 0.1;
     }
+    m.geometry.attributes.position.needsUpdate = true;
   });
-
   return (
     <mesh ref={meshRef} position={origin}>
       <ringGeometry args={[0.5, 0.8, 64]} />
-      <meshBasicMaterial
-        color="#C0C0C0"
-        transparent={true}
-        opacity={opacity}
-        side={THREE.DoubleSide}
-        blending={THREE.AdditiveBlending}
-      />
+      <meshBasicMaterial color="#C0C0C0" transparent opacity={opacity} side={THREE.DoubleSide} blending={THREE.AdditiveBlending}/>
     </mesh>
   );
 }
 
-// Metallic Reality Tear Effect
 function MetallicTear({ startPos, endPos, progress }) {
   const meshRef = useRef();
-
   useFrame(() => {
-    if (meshRef.current && progress < 1) {
-      const curve = new THREE.QuadraticBezierCurve3(
-        new THREE.Vector3(...startPos),
-        new THREE.Vector3(
-          (startPos[0] + endPos[0]) / 2 + (Math.random() - 0.5) * 2,
-          (startPos[1] + endPos[1]) / 2 + (Math.random() - 0.5) * 2,
-          (startPos[2] + endPos[2]) / 2 + (Math.random() - 0.5) * 2
-        ),
-        new THREE.Vector3(...endPos)
-      );
-
-      const points = curve.getPoints(50);
-      const positions = new Float32Array(points.length * 3);
-
-      points.forEach((point, i) => {
-        if (i / points.length < progress) {
-          positions[i * 3] = point.x + (Math.random() - 0.5) * 0.1;
-          positions[i * 3 + 1] = point.y + (Math.random() - 0.5) * 0.1;
-          positions[i * 3 + 2] = point.z + (Math.random() - 0.5) * 0.1;
-        }
-      });
-
-      meshRef.current.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    }
+    const m = meshRef.current; if (!m) return;
+    const mid = [(startPos[0]+endPos[0])/2, (startPos[1]+endPos[1])/2, (startPos[2]+endPos[2])/2];
+    const curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(...startPos),
+      new THREE.Vector3(mid[0] + (Math.random()-0.5)*2, mid[1] + (Math.random()-0.5)*2, mid[2] + (Math.random()-0.5)*2),
+      new THREE.Vector3(...endPos)
+    );
+    const points = curve.getPoints(50);
+    const positions = new Float32Array(points.length * 3);
+    points.forEach((p, i) => {
+      if (i / points.length < progress) {
+        positions[i*3] = p.x + (Math.random()-0.5)*0.1;
+        positions[i*3+1] = p.y + (Math.random()-0.5)*0.1;
+        positions[i*3+2] = p.z + (Math.random()-0.5)*0.1;
+      }
+    });
+    m.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   });
-
   return (
     <line ref={meshRef}>
       <bufferGeometry />
@@ -249,45 +183,39 @@ function MetallicTear({ startPos, endPos, progress }) {
 function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
   const meshRef = useRef();
   const [iceNormalMap, iceRoughnessMap] = useTexture(['/textures/ice_normal.jpg', '/textures/ice_roughness.jpg']);
-
-  const materials = useMemo(() => {
-    return sections.map(section => {
-      const props = section.materialProps;
-      return new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color(props.color),
-        metalness: props.metalness,
-        roughness: props.roughness,
-        normalMap: iceNormalMap,
-        roughnessMap: iceRoughnessMap,
-        normalScale: new THREE.Vector2(1, 1),
-        transparent: true,
-        transmission: 0.5,
-        opacity: opacity,
-        ior: 1.5,
-        thickness: 0.8,
-        emissive: new THREE.Color(props.emissive),
-        emissiveIntensity: 0.4,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.05
-      });
+  const materials = useMemo(() => sections.map(section => {
+    const props = section.materialProps;
+    return new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color(props.color),
+      metalness: props.metalness,
+      roughness: props.roughness,
+      normalMap: iceNormalMap,
+      roughnessMap: iceRoughnessMap,
+      normalScale: new THREE.Vector2(1, 1),
+      transparent: true,
+      transmission: 0.5,
+      opacity,
+      ior: 1.5,
+      thickness: 0.8,
+      emissive: new THREE.Color(props.emissive),
+      emissiveIntensity: 0.4,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.05
     });
-  }, [opacity, iceNormalMap, iceRoughnessMap]);
+  }), [opacity, iceNormalMap, iceRoughnessMap]);
 
-  const handleClick = (event) => {
+  const handleClick = (e) => {
     if (!visible) return;
-    event.stopPropagation();
-    const materialIndex = event.face?.materialIndex;
-    if (materialIndex !== undefined) {
-      const section = sections[materialIndex];
-      if (section && !section.disabled) {
-        console.log("Cube face clicked, section ID:", section.id);
-        onFaceClick(section);
-      }
+    e.stopPropagation();
+    const idx = e.face?.materialIndex;
+    if (idx !== undefined) {
+      const section = sections[idx];
+      if (section && !section.disabled) onFaceClick(section);
     }
   };
   return (
-    <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0, 0, 0]} visible={visible}>
-      <boxGeometry args={[2, 2, 2]} />
+    <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0,0,0]} visible={visible}>
+      <boxGeometry args={[2,2,2]} />
     </mesh>
   );
 }
@@ -295,19 +223,18 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
 function Fragment({ position, velocity, scale, color }) {
   const meshRef = useRef();
   const vel = useRef([...velocity]);
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.position.x += vel.current[0] * delta;
-      meshRef.current.position.y += vel.current[1] * delta;
-      meshRef.current.position.z += vel.current[2] * delta;
-      vel.current[0] *= 0.98; vel.current[1] *= 0.98; vel.current[2] *= 0.98;
-      meshRef.current.rotation.x += delta; meshRef.current.rotation.y += delta * 1.5;
-      meshRef.current.scale.multiplyScalar(0.98);
-    }
+  useFrame((_, delta) => {
+    const m = meshRef.current; if (!m) return;
+    m.position.x += vel.current[0] * delta;
+    m.position.y += vel.current[1] * delta;
+    m.position.z += vel.current[2] * delta;
+    vel.current[0]*=0.98; vel.current[1]*=0.98; vel.current[2]*=0.98;
+    m.rotation.x += delta; m.rotation.y += delta * 1.5;
+    m.scale.multiplyScalar(0.98);
   });
   return (
     <mesh ref={meshRef} position={position} scale={scale}>
-      <boxGeometry args={[1, 1, 1]} />
+      <boxGeometry args={[1,1,1]} />
       <meshBasicMaterial color={color || "#C0C0C0"} />
     </mesh>
   );
@@ -317,8 +244,8 @@ function CameraController({ darkMatterProgress, targetPos }) {
   const { camera } = useThree();
   useFrame(() => {
     if (darkMatterProgress > 0 && targetPos) {
-      const currentPos = new THREE.Vector3().lerpVectors(new THREE.Vector3(0, 0, 0), new THREE.Vector3(...targetPos), darkMatterProgress);
-      const cameraPos = currentPos.clone().add(new THREE.Vector3(3, 3, 3));
+      const currentPos = new THREE.Vector3().lerpVectors(new THREE.Vector3(0,0,0), new THREE.Vector3(...targetPos), darkMatterProgress);
+      const cameraPos = currentPos.clone().add(new THREE.Vector3(3,3,3));
       camera.position.lerp(cameraPos, 0.07);
       camera.lookAt(currentPos);
     }
@@ -326,6 +253,7 @@ function CameraController({ darkMatterProgress, targetPos }) {
   return null;
 }
 
+// ---------- MAIN ----------
 export default function Scene() {
   const { isMobile, isTablet, isTouch } = useDeviceDetection();
   const { showWarning, timeLeft } = useAutoPreview();
@@ -343,6 +271,7 @@ export default function Scene() {
   const [realityTears, setRealityTears] = useState([]);
   const binauralAudioRef = useRef(null);
 
+  // PERF knobs
   const performanceSettings = useMemo(() => ({
     maxFragments: isMobile ? 4 : 8,
     maxTrails: isMobile ? 2 : 5,
@@ -352,52 +281,46 @@ export default function Scene() {
   }), [isMobile]);
 
   const cameraSettings = useMemo(() => ({
-    position: isMobile ? [3, 3, 3] : [5, 5, 5],
+    position: isMobile ? [3,3,3] : [5,5,5],
     fov: isMobile ? 60 : 50
   }), [isMobile]);
 
+  // binaural
   useEffect(() => {
-    const binauralAudio = binauralAudioRef.current;
-    if (binauralAudio && performanceSettings.enableBinaural) {
-      binauralAudio.play().catch(e => {
-        console.warn("Binaural audio autoplay prevented.", e);
-      });
+    const a = binauralAudioRef.current;
+    if (a && performanceSettings.enableBinaural) {
+      a.play().catch(() => {/* autoplay might be blocked */});
     }
-    return () => {
-      if (binauralAudio) binauralAudio.pause();
-    };
+    return () => { if (a) a.pause(); };
   }, [performanceSettings.enableBinaural]);
 
   useEffect(() => {
-    if (binauralAudioRef.current && performanceSettings.enableBinaural) {
-      if (mediaIsPlaying || binauralPaused) {
-        binauralAudioRef.current.pause();
-      } else {
-        if (menuVisible || (!darkMatterVisible && !menuVisible)) {
-          binauralAudioRef.current.play().catch(e => console.error("Error resuming binaural audio:", e));
-        }
-      }
+    const a = binauralAudioRef.current;
+    if (!a || !performanceSettings.enableBinaural) return;
+    if (mediaIsPlaying || binauralPaused) a.pause();
+    else if (menuVisible || (!darkMatterVisible && !menuVisible)) {
+      a.play().catch(() => {});
     }
   }, [mediaIsPlaying, menuVisible, darkMatterVisible, performanceSettings.enableBinaural, binauralPaused]);
 
+  // ---------- TRANSITION: cube → blob ----------
   const handleCubeClick = useCallback((section) => {
     if (!cubeVisible || section.disabled) return;
-    setCubeOpacity(0);
 
+    // pause binaural for media sections
     if (section.id === 'video' || section.id === 'music') {
       setBinauralPaused(true);
-      if (binauralAudioRef.current) {
-        binauralAudioRef.current.pause();
-      }
+      binauralAudioRef.current?.pause();
     }
 
+    // vfx: fragments / ripples / tears (unchanged)
     const frags = [];
     for (let i = 0; i < performanceSettings.maxFragments; i++) {
       frags.push({
         id: i,
-        position: [(Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5],
-        velocity: [(Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5],
-        scale: 0.2 + Math.random() * 0.3,
+        position: [(Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5],
+        velocity: [(Math.random()-0.5)*5, (Math.random()-0.5)*5, (Math.random()-0.5)*5],
+        scale: 0.2 + Math.random()*0.3,
         color: section.materialProps.color
       });
     }
@@ -407,13 +330,9 @@ export default function Scene() {
     for (let i = 0; i < performanceSettings.maxRipples; i++) {
       ripples.push({
         id: Date.now() + i,
-        origin: [
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 2,
-          (Math.random() - 0.5) * 2
-        ],
-        scale: 0.5 + Math.random() * 0.5,
-        opacity: 0.6 + Math.random() * 0.4,
+        origin: [(Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2],
+        scale: 0.5 + Math.random()*0.5,
+        opacity: 0.6 + Math.random()*0.4,
         delay: i * 0.1
       });
     }
@@ -421,37 +340,37 @@ export default function Scene() {
 
     const tears = [];
     for (let i = 0; i < 2; i++) {
-      tears.push({
-        id: Date.now() + i + 100,
-        startPos: [0, 0, 0],
-        endPos: section.targetPos,
-        progress: 0
-      });
+      tears.push({ id: Date.now() + i + 100, startPos: [0,0,0], endPos: section.targetPos, progress: 0 });
     }
     setRealityTears(tears);
 
-    setTimeout(() => {
-      setCubeVisible(false);
-      setDarkMatterVisible(true);
-      setActiveSection(section);
+    // start crossfade/morph
+    setActiveSection(section);
+    setDarkMatterVisible(true); // make blob mount
+    setMenuVisible(false);
 
-      const animate = () => {
-        setDarkMatterProgress(prev => {
-          const next = prev + 0.01;
-          if (next >= 1) {
-            setTimeout(() => setMenuVisible(true), 800);
-            return 1;
-          }
-          requestAnimationFrame(animate);
-          return next;
-        });
-      };
-      animate();
-    }, 500);
+    // Fade cube from 1→0 while morphing blob 0→1
+    tween({
+      from: cubeOpacity,
+      to: 0,
+      duration: 750,
+      onUpdate: (v) => setCubeOpacity(v),
+      onComplete: () => setCubeVisible(false)
+    });
 
+    tween({
+      from: 0,
+      to: 1,
+      duration: 1100, // slightly longer than cube fade to feel luxurious
+      onUpdate: (v) => setDarkMatterProgress(v),
+      onComplete: () => setTimeout(() => setMenuVisible(true), 400)
+    });
+
+    // clean up fragments later
     setTimeout(() => setFragments([]), 1000);
-  }, [cubeVisible, performanceSettings.maxFragments, performanceSettings.maxRipples]);
+  }, [cubeVisible, cubeOpacity, performanceSettings.maxFragments, performanceSettings.maxRipples]);
 
+  // ---------- TRANSITION: blob → cube ----------
   const handleReset = useCallback(() => {
     setMenuVisible(false);
     setMediaIsPlaying(false);
@@ -460,72 +379,86 @@ export default function Scene() {
     setRealityTears([]);
 
     if (binauralAudioRef.current && performanceSettings.enableBinaural) {
-      binauralAudioRef.current.play().catch(e => console.error("Error resuming binaural audio:", e));
+      binauralAudioRef.current.play().catch(() => {});
     }
 
-    const animate = () => {
-      setDarkMatterProgress(prev => {
-        const next = prev - 0.015;
-        if (next <= 0) {
-          setDarkMatterVisible(false);
-          setCubeVisible(true);
-          setActiveSection(null);
-          setCubeOpacity(1);
-          return 0;
-        }
-        requestAnimationFrame(animate);
-        return next;
-      });
-    };
-    animate();
-  }, [performanceSettings.enableBinaural]);
+    // show cube (but start transparent), then fade up while morphing back
+    setCubeVisible(true);
 
-  const handleMediaPlayingChange = useCallback((isPlaying) => {
-    setMediaIsPlaying(isPlaying);
-  }, []);
+    tween({
+      from: darkMatterProgress,
+      to: 0,
+      duration: 1000,
+      onUpdate: (v) => setDarkMatterProgress(v),
+      onComplete: () => {
+        setDarkMatterVisible(false);
+        setActiveSection(null);
+      }
+    });
 
+    tween({
+      from: 0,
+      to: 1,
+      duration: 650,
+      onUpdate: (v) => setCubeOpacity(v)
+    });
+  }, [darkMatterProgress, performanceSettings.enableBinaural]);
+
+  const handleMediaPlayingChange = useCallback((isPlaying) => setMediaIsPlaying(isPlaying), []);
+
+  // animate tears progress (unchanged)
   useEffect(() => {
-    if (realityTears.length > 0) {
-      const animate = () => {
-        setRealityTears(prev => prev.map(tear => ({
-          ...tear,
-          progress: Math.min(tear.progress + 0.03, 1)
-        })).filter(tear => tear.progress < 1));
-
-        if (realityTears.length > 0) {
-          requestAnimationFrame(animate);
-        }
-      };
-      requestAnimationFrame(animate);
-    }
+    if (realityTears.length === 0) return;
+    let raf;
+    const step = () => {
+      setRealityTears(prev => prev.map(t => ({ ...t, progress: Math.min(t.progress + 0.03, 1) })).filter(t => t.progress < 1));
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
   }, [realityTears.length]);
 
+  // auto-clear ripples
   useEffect(() => {
-    const cleanup = setTimeout(() => {
-      setVoidRipples([]);
-    }, 3000);
+    const cleanup = setTimeout(() => setVoidRipples([]), 3000);
     return () => clearTimeout(cleanup);
   }, [voidRipples.length]);
+
+  // a gentle drift for flowDirection so the blob never looks static/circular
+  const flowDirRef = useRef(new THREE.Vector3(1,0,0));
+  useFrame(({ clock }) => {
+    if (!activeSection) return;
+    const t = clock.getElapsedTime();
+    const base = new THREE.Vector3(...activeSection.targetPos).normalize();
+    // add tiny orthogonal wobble
+    const wobble = new THREE.Vector3(Math.sin(t*0.5)*0.15, Math.cos(t*0.4)*0.1, Math.sin(t*0.3+1.2)*0.12);
+    flowDirRef.current.copy(base).add(wobble).normalize();
+  });
 
   return (
     <>
       <Canvas
         camera={{ position: cameraSettings.position, fov: cameraSettings.fov }}
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
+          position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh',
           background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
           touchAction: 'none'
         }}
       >
+        {/* lighting — current warm vibe */}
         <ambientLight intensity={0.6} color="#F0E68C" />
-        <directionalLight position={[5, 10, 7.5]} intensity={1.2} color="#FFFACD" />
-        <directionalLight position={[-5, -5, -5]} intensity={0.8} color="#F5DEB3" />
+        <directionalLight position={[5,10,7.5]} intensity={1.2} color="#FFFACD" />
+        <directionalLight position={[-5,-5,-5]} intensity={0.8} color="#F5DEB3" />
+
+        {/*
+        // alt: cooler/hopeful-white vibe (swap the three above for this block)
+        <ambientLight intensity={0.35} color="#ffffff" />
+        <directionalLight position={[6,8,6]} intensity={1.3} color="#ffffff" />
+        <hemisphereLight args={['#dfe8ff','#98a0b3',0.5]} />
+        */}
 
         <MinimalCube onFaceClick={handleCubeClick} visible={cubeVisible} opacity={cubeOpacity} />
+
         {fragments.map(frag => <Fragment key={frag.id} {...frag} />)}
 
         {darkMatterVisible && activeSection && (
@@ -536,10 +469,10 @@ export default function Scene() {
               darkMatterProgress * activeSection.targetPos[2]
             ]}>
               <QuantumVisualization
-                position={[0, 0, 0]}
-                scale={1.2 - darkMatterProgress * 0.4}
+                position={[0,0,0]}
+                scale={1.15 - darkMatterProgress * 0.35} // keep presence; avoid tiny sphere feel
                 opacity={1}
-                flowDirection={new THREE.Vector3(...activeSection.targetPos).normalize()}
+                flowDirection={flowDirRef.current}
                 isFlowing={true}
                 flowProgress={darkMatterProgress}
               />
@@ -561,36 +494,28 @@ export default function Scene() {
           </>
         )}
 
-        {voidRipples.map(ripple => (
-          <MetallicRipple
-            key={ripple.id}
-            origin={ripple.origin}
-            scale={ripple.scale}
-            opacity={ripple.opacity}
-          />
-        ))}
+        {voidRipples.map(r => <MetallicRipple key={r.id} origin={r.origin} scale={r.scale} opacity={r.opacity} />)}
+        {realityTears.map(t => <MetallicTear key={t.id} startPos={t.startPos} endPos={t.endPos} progress={t.progress} />)}
 
-        {realityTears.map(tear => (
-          <MetallicTear
-            key={tear.id}
-            startPos={tear.startPos}
-            endPos={tear.endPos}
-            progress={tear.progress}
-          />
-        ))}
+        {darkMatterVisible && activeSection && (
+          <CameraController darkMatterProgress={darkMatterProgress} targetPos={activeSection.targetPos} />
+        )}
 
-        {darkMatterVisible && activeSection && <CameraController darkMatterProgress={darkMatterProgress} targetPos={activeSection.targetPos} />}
         <OrbitControls
           enablePan={false}
           enabled={!darkMatterVisible}
-          enableDamping={true}
+          enableDamping
           dampingFactor={0.05}
           maxDistance={isMobile ? 8 : 15}
           minDistance={isMobile ? 2 : 3}
         />
       </Canvas>
 
-      <SectionContent section={menuVisible ? activeSection : null} onReset={handleReset} onMediaPlayingChange={handleMediaPlayingChange} />
+      <SectionContent
+        section={menuVisible ? activeSection : null}
+        onReset={handleReset}
+        onMediaPlayingChange={handleMediaPlayingChange}
+      />
 
       {performanceSettings.enableBinaural && (
         <audio ref={binauralAudioRef} loop preload="auto" src="/audio/binaural_loop.mp3" />
@@ -598,43 +523,20 @@ export default function Scene() {
 
       {showWarning && (
         <div style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
+          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
           background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-          border: '4px solid #808080',
-          borderRadius: '12px',
-          padding: '35px',
-          textAlign: 'center',
-          color: '#1A1A1A',
-          fontFamily: 'monospace',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          zIndex: 10000,
-          boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)',
+          border: '4px solid #808080', borderRadius: '12px', padding: '35px', textAlign: 'center',
+          color: '#1A1A1A', fontFamily: 'monospace', fontSize: '18px', fontWeight: 'bold',
+          zIndex: 10000, boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)',
           textShadow: '0 0 5px rgba(0,0,255,0.3)'
         }}>
-          <div style={{
-            marginBottom: '20px',
-            color: '#2C2C2C',
-            textShadow: '0 0 5px rgba(0,0,255,0.3)'
-          }}>
+          <div style={{ marginBottom: '20px', color: '#2C2C2C', textShadow: '0 0 5px rgba(0,0,255,0.3)' }}>
             ⚠ INITIATING VOID GLIMPSE ⚠
           </div>
-          <div style={{
-            color: '#1A1A1A',
-            textShadow: '0 0 5px rgba(0,0,255,0.3)'
-          }}>
+          <div style={{ color: '#1A1A1A', textShadow: '0 0 5px rgba(0,0,255,0.3)' }}>
             Dimensional breach in {timeLeft} seconds...
           </div>
-          <div style={{
-            fontSize: '14px',
-            marginTop: '15px',
-            color: '#4A4A4A',
-            fontStyle: 'italic',
-            textShadow: '0 0 5px rgba(0,0,255,0.3)'
-          }}>
+          <div style={{ fontSize: '14px', marginTop: '15px', color: '#4A4A4A', fontStyle: 'italic', textShadow: '0 0 5px rgba(0,0,255,0.3)' }}>
             Move to cancel
           </div>
         </div>
@@ -642,19 +544,11 @@ export default function Scene() {
 
       {process.env.NODE_ENV === 'development' && (
         <div style={{
-          position: 'fixed',
-          top: 10,
-          left: 10,
+          position: 'fixed', top: 10, left: 10,
           background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-          border: '2px solid #808080',
-          borderRadius: '8px',
-          padding: '10px',
-          color: '#2C2C2C',
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          fontWeight: 'bold',
-          zIndex: 9999,
-          boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
+          border: '2px solid #808080', borderRadius: '8px', padding: '10px',
+          color: '#2C2C2C', fontFamily: 'monospace', fontSize: '12px', fontWeight: 'bold',
+          zIndex: 9999, boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
           textShadow: '0 0 5px rgba(0,0,255,0.3)'
         }}>
           Device: {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | Touch: {isTouch ? 'Yes' : 'No'}
