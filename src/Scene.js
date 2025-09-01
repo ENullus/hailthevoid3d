@@ -452,7 +452,7 @@ export default function Scene() {
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [realityTears.length]);
+  }, [realityTears]);
 
   // auto-clear ripples
   useEffect(() => {
