@@ -167,15 +167,22 @@ function MetallicRipple({ origin, scale, opacity }) {
 
 function MetallicTear({ startPos, endPos, progress }) {
   const meshRef = useRef();
-  useFrame(() => {
-    const m = meshRef.current; if (!m) return;
+  const pointsRef = useRef([]);
+  
+  useEffect(() => {
+    // Calculate points only once
     const mid = [(startPos[0]+endPos[0])/2, (startPos[1]+endPos[1])/2, (startPos[2]+endPos[2])/2];
     const curve = new THREE.QuadraticBezierCurve3(
       new THREE.Vector3(...startPos),
       new THREE.Vector3(mid[0] + (Math.random()-0.5)*2, mid[1] + (Math.random()-0.5)*2, mid[2] + (Math.random()-0.5)*2),
       new THREE.Vector3(...endPos)
     );
-    const points = curve.getPoints(50);
+    pointsRef.current = curve.getPoints(50);
+  }, [startPos, endPos]);
+  
+  useFrame(() => {
+    const m = meshRef.current; if (!m || !pointsRef.current.length) return;
+    const points = pointsRef.current;
     const positions = new Float32Array(points.length * 3);
     points.forEach((p, i) => {
       if (i / points.length < progress) {
@@ -196,15 +203,30 @@ function MetallicTear({ startPos, endPos, progress }) {
 
 function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
   const meshRef = useRef();
-  const [iceNormalMap, iceRoughnessMap] = useTexture(['/textures/ice_normal.jpg', '/textures/ice_roughness.jpg']);
+  const [texturesLoaded, setTexturesLoaded] = useState(false);
+  
+  // Use fallback if textures don't exist
+  const iceNormalMap = useTexture('/textures/ice_normal.jpg', 
+    () => setTexturesLoaded(true),
+    () => {
+      console.warn('Ice normal texture not found, using default');
+      setTexturesLoaded(true);
+    }
+  );
+  
+  const iceRoughnessMap = useTexture('/textures/ice_roughness.jpg', 
+    undefined,
+    () => console.warn('Ice roughness texture not found, using default')
+  );
+  
   const materials = useMemo(() => sections.map(section => {
     const props = section.materialProps;
     return new THREE.MeshPhysicalMaterial({
       color: new THREE.Color(props.color),
       metalness: props.metalness,
       roughness: props.roughness,
-      normalMap: iceNormalMap,
-      roughnessMap: iceRoughnessMap,
+      normalMap: texturesLoaded ? iceNormalMap : null,
+      roughnessMap: texturesLoaded ? iceRoughnessMap : null,
       normalScale: new THREE.Vector2(1, 1),
       transparent: true,
       transmission: 0.5,
@@ -216,9 +238,9 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
       clearcoat: 1.0,
       clearcoatRoughness: 0.05
     });
-  }), [opacity, iceNormalMap, iceRoughnessMap]);
+  }), [opacity, iceNormalMap, iceRoughnessMap, texturesLoaded]);
 
-  const handleClick = (e) => {
+  const handleClick = useCallback((e) => {
     if (!visible) return;
     e.stopPropagation();
     const idx = e.face?.materialIndex;
@@ -226,7 +248,8 @@ function MinimalCube({ onFaceClick, visible, opacity = 1 }) {
       const section = sections[idx];
       if (section && !section.disabled) onFaceClick(section);
     }
-  };
+  }, [visible, onFaceClick]);
+  
   return (
     <mesh ref={meshRef} onClick={handleClick} material={materials} position={[0,0,0]} visible={visible}>
       <boxGeometry args={[2,2,2]} />
@@ -298,7 +321,7 @@ export default function Scene() {
     fov: isMobile ? 60 : 50
   }), [isMobile]);
 
-  // binaural
+  // binaural audio management
   useEffect(() => {
     const a = binauralAudioRef.current;
     if (a && performanceSettings.enableBinaural) {
@@ -310,8 +333,11 @@ export default function Scene() {
   useEffect(() => {
     const a = binauralAudioRef.current;
     if (!a || !performanceSettings.enableBinaural) return;
-    if (mediaIsPlaying || binauralPaused) a.pause();
-    else if (menuVisible || (!darkMatterVisible && !menuVisible)) a.play().catch(() => {});
+    if (mediaIsPlaying || binauralPaused) {
+      a.pause();
+    } else if (menuVisible || (!darkMatterVisible && !menuVisible)) {
+      a.play().catch(() => {});
+    }
   }, [mediaIsPlaying, menuVisible, darkMatterVisible, performanceSettings.enableBinaural, binauralPaused]);
 
   // ---------- cube → blob ----------
@@ -320,7 +346,9 @@ export default function Scene() {
 
     if (section.id === 'video' || section.id === 'music') {
       setBinauralPaused(true);
-      binauralAudioRef.current?.pause();
+      if (binauralAudioRef.current) {
+        binauralAudioRef.current.pause();
+      }
     }
 
     const frags = [];
@@ -418,7 +446,9 @@ export default function Scene() {
     let raf;
     const step = () => {
       setRealityTears(prev => prev.map(t => ({ ...t, progress: Math.min(t.progress + 0.03, 1) })).filter(t => t.progress < 1));
-      raf = requestAnimationFrame(step);
+      if (realityTears.some(t => t.progress < 1)) {
+        raf = requestAnimationFrame(step);
+      }
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
@@ -426,8 +456,10 @@ export default function Scene() {
 
   // auto-clear ripples
   useEffect(() => {
-    const cleanup = setTimeout(() => setVoidRipples([]), 3000);
-    return () => clearTimeout(cleanup);
+    if (voidRipples.length > 0) {
+      const cleanup = setTimeout(() => setVoidRipples([]), 3000);
+      return () => clearTimeout(cleanup);
+    }
   }, [voidRipples.length]);
 
   // living flowDirection wobble so blob never looks perfectly circular
@@ -457,18 +489,17 @@ export default function Scene() {
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'transparent', // let gradient show through
+          background: 'transparent',
           touchAction: 'none'
         }}
         onCreated={({ gl }) => {
           gl.outputColorSpace = THREE.SRGBColorSpace;
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.0;
-          if (gl.setClearAlpha) gl.setClearAlpha(0); // transparent clear
+          if (gl.setClearAlpha) gl.setClearAlpha(0);
           gl.setClearColor(0x000000, 0);
         }}
       >
-        {/* current warm lighting (swap for white if you want) */}
         <ambientLight intensity={0.6} color="#F0E68C" />
         <directionalLight position={[5,10,7.5]} intensity={1.2} color="#FFFACD" />
         <directionalLight position={[-5,-5,-5]} intensity={0.8} color="#F5DEB3" />
@@ -535,7 +566,7 @@ export default function Scene() {
       <SectionContent
         section={menuVisible ? activeSection : null}
         onReset={handleReset}
-        onMediaPlayingChange={setMediaIsPlaying}
+        onMediaPlayingChange={handleMediaPlayingChange}
       />
 
       {(!isMobile) && (
