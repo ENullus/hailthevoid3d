@@ -527,20 +527,10 @@ export default function Scene() {
         if (next <= 0) {
           setDarkMatterVisible(false);
           setCubeVisible(true);
+          setActiveSection(null);
           
-          // Reverse morph back to cube
-          const reverseMorph = () => {
-            setMorphProgress(prev => {
-              const next = prev - 0.03;
-              if (next <= 0) {
-                setActiveSection(null);
-                return 0;
-              }
-              requestAnimationFrame(reverseMorph);
-              return next;
-            });
-          };
-          reverseMorph();
+          // Reset morph progress back to 0 (fully formed cube)
+          setMorphProgress(0);
           
           return 0;
         }
