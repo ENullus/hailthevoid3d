@@ -1,5 +1,5 @@
 import React, {
-  useRef, useState, useCallback, useEffect, useMemo, Suspense
+  useRef, useState, useCallback, useLayoutEffect, useMemo, Suspense
 } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, useTexture, useGLTF } from '@react-three/drei';
@@ -298,8 +298,8 @@ function MorphingCube({ onFaceClick, visible, morphProgress = 0 }) {
 function FaceShellOverlay() {
   const { scene } = useGLTF(FACE_SHELL_PATH);
 
-  useEffect(() => {
-    if (!scene) return;
+  useLayoutEffect(() => {
+    if (!scene || !baseMap) return;
     
     // Load textures manually
     const loader = new THREE.TextureLoader();
