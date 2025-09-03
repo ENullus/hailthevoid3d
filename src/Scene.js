@@ -297,23 +297,22 @@ function MorphingCube({ onFaceClick, visible, morphProgress = 0 }) {
 /* ============================= FACE GLB OVERLAY =========================== */
 function FaceShellOverlay() {
   const { scene } = useGLTF(FACE_SHELL_PATH);
+  const faceTextures = useTexture({
+    map: '/textures/ethereal_base.png',
+    normalMap: '/textures/ethereal_normal.png', 
+    roughnessMap: '/textures/ethereal_roughness.png',
+    metalnessMap: '/textures/ethereal_metallic.png'
+  });
 
   useEffect(() => {
-    if (!scene || !baseMap) return;
+    if (!scene || !faceTextures.map) return;
     
-    // Load textures manually
-    const loader = new THREE.TextureLoader();
-    const baseMap = loader.load('/textures/ethereal_base.png');
-    const normalMap = loader.load('/textures/ethereal_normal.png');
-    const roughnessMap = loader.load('/textures/ethereal_roughness.png');
-    const metallicMap = loader.load('/textures/ethereal_metallic.png');
-
     // Set color spaces
-    baseMap.colorSpace = THREE.SRGBColorSpace;
-    normalMap.colorSpace = THREE.NoColorSpace;
-    roughnessMap.colorSpace = THREE.NoColorSpace;
-    metallicMap.colorSpace = THREE.NoColorSpace;
-
+    faceTextures.map.colorSpace = THREE.SRGBColorSpace;
+    faceTextures.normalMap.colorSpace = THREE.NoColorSpace;
+    faceTextures.roughnessMap.colorSpace = THREE.NoColorSpace;
+    faceTextures.metalnessMap.colorSpace = THREE.NoColorSpace;
+    
     const box = new THREE.Box3().setFromObject(scene);
     const size = new THREE.Vector3(); box.getSize(size);
     const center = new THREE.Vector3(); box.getCenter(center);
@@ -328,11 +327,8 @@ function FaceShellOverlay() {
         o.castShadow = o.receiveShadow = false;
         o.renderOrder = 2;
         o.material = new THREE.MeshPhysicalMaterial({
+          ...faceTextures,
           color: new THREE.Color("#D3D3D3"),
-          map: baseMap,
-          normalMap: normalMap,
-          roughnessMap: roughnessMap,
-          metalnessMap: metallicMap,
           metalness: 1.0,
           roughness: 0.10,
           normalScale: new THREE.Vector2(1, 1),
@@ -350,7 +346,7 @@ function FaceShellOverlay() {
         });
       }
     });
-  }, [scene]);
+  }, [scene, faceTextures]);
 
   return <primitive object={scene} />;
 }
