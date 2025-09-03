@@ -33,6 +33,9 @@ const sections = [
 
 /* ============================== UTIL: scripts ============================= */
 function useScript(src, attrs = {}, enabled = true) {
+  // Extract attrs keys to a stable dependency
+  const attrsKeys = useMemo(() => Object.keys(attrs).sort().join(','), [attrs]);
+  
   useEffect(() => {
     if (!enabled) return;
     // if script already exists, reuse
@@ -44,7 +47,7 @@ function useScript(src, attrs = {}, enabled = true) {
     s.async = true;
     document.body.appendChild(s);
     return () => { /* keep SDKs cached */ };
-  }, [src, enabled, JSON.stringify(attrs)]);
+  }, [src, enabled, attrsKeys, attrs]);
 }
 
 /* ============================== ERROR BOUNDARY ============================ */
@@ -401,7 +404,7 @@ function AboutOverlay({ open, onClose }) {
         containerRef.current.appendChild(iframe);
 
         // Build YT Player to get ended event
-        const player = new window.YT.Player(iframe, {
+        new window.YT.Player(iframe, {
           events: {
             onReady: () => { readyRef.current = true; },
             onStateChange: (e) => {
@@ -430,9 +433,9 @@ function AboutOverlay({ open, onClose }) {
         iframe.setAttribute('allowfullscreen', '1');
         containerRef.current.appendChild(iframe);
 
-        const player = new window.Vimeo.Player(iframe);
-        player.on('loaded', () => { readyRef.current = true; });
-        player.on('ended', () => onClose());
+        const vimeoPlayer = new window.Vimeo.Player(iframe);
+        vimeoPlayer.on('loaded', () => { readyRef.current = true; });
+        vimeoPlayer.on('ended', () => onClose());
       };
       const wait = setInterval(() => {
         if (window.Vimeo && window.Vimeo.Player) { clearInterval(wait); startVimeo(); }
@@ -474,7 +477,6 @@ export default function Scene() {
   const [cubeVisible, setCubeVisible] = useState(true);
   const [cubeKey, setCubeKey] = useState(0);
   const [morphProgress, setMorphProgress] = useState(0);
-  const [fragments, setFragments] = useState([]);
   const [darkMatterVisible, setDarkMatterVisible] = useState(false);
   const [darkMatterProgress, setDarkMatterProgress] = useState(0);
   const [activeSection, setActiveSection] = useState(null);
@@ -564,18 +566,6 @@ export default function Scene() {
       });
     };
 
-    const frags = [];
-    for (let i = 0; i < performanceSettings.maxFragments; i++) {
-      frags.push({
-        id: i,
-        position: [(Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5],
-        velocity: [(Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5],
-        scale: 0.2 + Math.random() * 0.3,
-        color: section.materialProps.color
-      });
-    }
-    setFragments(frags);
-
     const ripples = [];
     for (let i = 0; i < performanceSettings.maxRipples; i++) {
       ripples.push({
@@ -594,8 +584,7 @@ export default function Scene() {
     }
     setRealityTears(tears);
     morphAnimate();
-    setTimeout(() => setFragments([]), 2000);
-  }, [cubeVisible, morphProgress, performanceSettings.maxFragments, performanceSettings.maxRipples, startAboutOverlay]);
+  }, [cubeVisible, morphProgress, performanceSettings.maxRipples, startAboutOverlay]);
 
   const handleReset = useCallback(() => {
     setCubeKey(k => k + 1); // hard remount cube (cleans morph artifacts)
@@ -604,7 +593,6 @@ export default function Scene() {
     setBinauralPaused(false);
     setVoidRipples([]);
     setRealityTears([]);
-    setFragments([]);
     setDarkMatterVisible(false);
     setActiveSection(null);
     setMorphProgress(0);
