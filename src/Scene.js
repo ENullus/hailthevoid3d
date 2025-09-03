@@ -297,10 +297,23 @@ function MorphingCube({ onFaceClick, visible, morphProgress = 0 }) {
 /* ============================= FACE GLB OVERLAY =========================== */
 function FaceShellOverlay() {
   const { scene } = useGLTF(FACE_SHELL_PATH);
-  const { baseMap, normalMap, roughnessMap, metallicMap } = useEtherealTextures();
 
   useEffect(() => {
-    if (!scene || !baseMap) return;
+    if (!scene) return;
+    
+    // Load textures manually
+    const loader = new THREE.TextureLoader();
+    const baseMap = loader.load('/textures/ethereal_base.png');
+    const normalMap = loader.load('/textures/ethereal_normal.png');
+    const roughnessMap = loader.load('/textures/ethereal_roughness.png');
+    const metallicMap = loader.load('/textures/ethereal_metallic.png');
+
+    // Set color spaces
+    baseMap.colorSpace = THREE.SRGBColorSpace;
+    normalMap.colorSpace = THREE.NoColorSpace;
+    roughnessMap.colorSpace = THREE.NoColorSpace;
+    metallicMap.colorSpace = THREE.NoColorSpace;
+
     const box = new THREE.Box3().setFromObject(scene);
     const size = new THREE.Vector3(); box.getSize(size);
     const center = new THREE.Vector3(); box.getCenter(center);
@@ -308,7 +321,7 @@ function FaceShellOverlay() {
     const targetWidth = 1.96;
     const s = targetWidth / Math.max(size.x, size.y);
     scene.scale.setScalar(s);
-    scene.position.z = 1.01; // sit just in front of +Z face
+    scene.position.z = 1.01;
 
     scene.traverse(o => {
       if (o.isMesh) {
@@ -317,30 +330,30 @@ function FaceShellOverlay() {
         o.material = new THREE.MeshPhysicalMaterial({
           color: new THREE.Color("#D3D3D3"),
           map: baseMap,
-          normalMap,
-          roughnessMap,
+          normalMap: normalMap,
+          roughnessMap: roughnessMap,
           metalnessMap: metallicMap,
-      metalness: 1.0,
-      roughness: 0.10,
-      normalScale: new THREE.Vector2(1, 1),
-      transparent: true,
-      transmission: 0.5,
-      opacity: 1,
-      ior: 1.5,
-      thickness: 0.8,
-      emissive: new THREE.Color("#F0F0F0"),
-      emissiveIntensity: 0.35,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.05,
-      depthWrite: false,
-      depthTest: true
+          metalness: 1.0,
+          roughness: 0.10,
+          normalScale: new THREE.Vector2(1, 1),
+          transparent: true,
+          transmission: 0.5,
+          opacity: 1,
+          ior: 1.5,
+          thickness: 0.8,
+          emissive: new THREE.Color("#F0F0F0"),
+          emissiveIntensity: 0.35,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.05,
+          depthWrite: false,
+          depthTest: true
+        });
+      }
     });
-  }
-});
-    console.log('[FaceShellOverlay] GLB loaded + PBR matched');
-  }, [scene, baseMap, normalMap, roughnessMap, metallicMap]);
+  }, [scene]);
 
   return <primitive object={scene} />;
+}
 }
 useGLTF.preload(FACE_SHELL_PATH);
 
