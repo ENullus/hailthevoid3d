@@ -772,7 +772,7 @@ export default function Scene() {
           enableDamping dampingFactor={0.05}
           maxDistance={isMobile ? 8 : 15}
           minDistance={isMobile ? 2 : 3}
-        />
+      />
       </Canvas>
 
       <SectionContent
