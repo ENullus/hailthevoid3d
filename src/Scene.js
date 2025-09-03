@@ -300,7 +300,7 @@ function FaceShellOverlay() {
   const { baseMap, normalMap, roughnessMap, metallicMap } = useEtherealTextures();
 
   useEffect(() => {
-    if (!scene) return;
+    if (!scene || !baseMap) return;
     const box = new THREE.Box3().setFromObject(scene);
     const size = new THREE.Vector3(); box.getSize(size);
     const center = new THREE.Vector3(); box.getCenter(center);
@@ -311,15 +311,15 @@ function FaceShellOverlay() {
     scene.position.z = 1.01; // sit just in front of +Z face
 
     scene.traverse(o => {
-  if (o.isMesh) {
-    o.castShadow = o.receiveShadow = false;
-    o.renderOrder = 2;
-    o.material = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color("#D3D3D3"),
-      map: baseMap,
-      normalMap,
-      roughnessMap,
-      metalnessMap: metallicMap,
+      if (o.isMesh) {
+        o.castShadow = o.receiveShadow = false;
+        o.renderOrder = 2;
+        o.material = new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color("#D3D3D3"),
+          map: baseMap,
+          normalMap,
+          roughnessMap,
+          metalnessMap: metallicMap,
       metalness: 1.0,
       roughness: 0.10,
       normalScale: new THREE.Vector2(1, 1),
