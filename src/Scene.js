@@ -465,6 +465,67 @@ function AboutOverlay({ open, onClose }) {
     </div>
   );
 }
+/*============================= CIRCUITS =============================*/
+function CircuitryField({ count = 15 }) {
+  const groupRef = useRef();
+  
+  const circuits = useMemo(() => {
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      position: [
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 15
+      ],
+      scale: 0.1 + Math.random() * 0.3,
+      opacity: 0.2 + Math.random() * 0.4,
+      speed: 0.5 + Math.random() * 1.5
+    }));
+  }, [count]);
+
+  useFrame((state) => {
+    if (groupRef.current) {
+      const time = state.clock.getElapsedTime();
+      groupRef.current.children.forEach((child, i) => {
+        const circuit = circuits[i];
+        child.position.x += Math.sin(time * circuit.speed * 0.3) * 0.005;
+        child.position.y += Math.cos(time * circuit.speed * 0.2) * 0.003;
+        child.material.opacity = circuit.opacity * (0.5 + Math.sin(time * circuit.speed) * 0.5);
+      });
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {circuits.map((circuit) => (
+        <mesh key={circuit.id} position={circuit.position} scale={circuit.scale}>
+          <ringGeometry args={[0.3, 0.5, 8]} />
+          <meshBasicMaterial 
+            color="#4A90E2" 
+            transparent 
+            opacity={circuit.opacity}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      ))}
+      {circuits.map((circuit) => (
+        <mesh 
+          key={`line-${circuit.id}`} 
+          position={[circuit.position[0] + 1, circuit.position[1], circuit.position[2]]}
+          scale={[2, 0.02, 0.02]}
+        >
+          <boxGeometry />
+          <meshBasicMaterial 
+            color="#87CEEB" 
+            transparent 
+            opacity={circuit.opacity * 0.6}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
 
 /* ================================== SCENE ================================= */
 export default function Scene() {
@@ -636,6 +697,15 @@ export default function Scene() {
 <directionalLight position={[-8, 8, -5]} intensity={0.8} color="#E6F3FF" />
 <directionalLight position={[0, -5, 8]} intensity={0.6} color="#F0F0FF" />
 <pointLight position={[0, 0, 5]} intensity={0.4} color="#FAFAFF" />
+          <Suspense fallback={null}>
+    <CircuitryField count={isMobile ? 8 : 15} />
+    
+    <MorphingCube
+      key={cubeKey}
+      onFaceClick={handleCubeClick}
+      visible={cubeVisible}
+      morphProgress={morphProgress}
+    />
 
         <Suspense fallback={null}>
           <MorphingCube
