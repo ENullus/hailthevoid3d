@@ -354,7 +354,6 @@ function FaceShellOverlay() {
 
   return <primitive object={scene} />;
 }
-}
 useGLTF.preload(FACE_SHELL_PATH);
 
 /* =========================== CAMERA CONTROLLER ============================ */
