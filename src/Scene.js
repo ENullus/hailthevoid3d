@@ -707,14 +707,6 @@ export default function Scene() {
       morphProgress={morphProgress}
     />
 
-        <Suspense fallback={null}>
-          <MorphingCube
-            key={cubeKey}
-            onFaceClick={handleCubeClick}
-            visible={cubeVisible}
-            morphProgress={morphProgress}
-          />
-
           {cubeVisible && morphProgress === 0 && (
             <ErrorBoundary>
               <FaceShellOverlay />
@@ -773,7 +765,8 @@ export default function Scene() {
           maxDistance={isMobile ? 8 : 15}
           minDistance={isMobile ? 2 : 3}
       />
-      </Canvas>
+     
+  </Canvas>
 
       <SectionContent
         section={menuVisible ? activeSection : null}
