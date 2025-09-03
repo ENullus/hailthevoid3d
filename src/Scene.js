@@ -314,24 +314,6 @@ function FaceShellOverlay() {
       if (o.isMesh) {
         o.castShadow = o.receiveShadow = false;
         o.renderOrder = 2;
-        o.material = new THREE.MeshPhysicalMaterial({
-          map: baseMap,
-          normalMap,
-          roughnessMap,
-          metalnessMap: metallicMap,
-          metalness: 1.0,
-          roughness: 1.0,
-          normalScale: new THREE.Vector2(1, 1),
-          color: '#e9eef3',
-          transmission: 0.5,
-          thickness: 0.7,
-          ior: 1.45,
-          attenuationColor: '#a8b6c3',
-          attenuationDistance: 1.1,
-          envMapIntensity: 1.0,
-          depthWrite: false,
-          depthTest: true
-        });
       }
     });
     console.log('[FaceShellOverlay] GLB loaded + PBR matched');
@@ -637,6 +619,7 @@ export default function Scene() {
         <ambientLight intensity={0.6} color="#F0E68C" />
         <directionalLight position={[5, 10, 7.5]} intensity={1.2} color="#FFFACD" />
         <directionalLight position={[-5, -5, -5]} intensity={0.8} color="#F5DEB3" />
+        <directionalLight position={[0, 0, 10]} intensity={0.3} color="#87CEEB" />
 
         <Suspense fallback={null}>
           <MorphingCube
