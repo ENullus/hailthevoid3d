@@ -1,20 +1,61 @@
-import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
+import React, {
+  useRef, useState, useCallback, useEffect, useMemo, Suspense
+} from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, useTexture, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import SectionContent from './SectionContent';
 import QuantumVisualization from './QuantumVisualization';
 
+/* =============================== CONFIG ================================== */
+// Choose your About video provider + ID
+// ABOUT_PROVIDER: 'youtube' | 'vimeo'
+const ABOUT_PROVIDER = 'youtube';           // <-- set 'vimeo' if using Vimeo
+const ABOUT_VIDEO_ID = 'jwr1EOvAxQI';     // <-- replace with your real ID
+
+// Asset paths
+const FACE_SHELL_PATH = '/models/faceShell.glb';
+const TEX_BASE   = '/textures/ethereal_base.png';
+const TEX_NORMAL = '/textures/ethereal_normal.png';
+const TEX_ROUGH  = '/textures/ethereal_roughness.png';
+const TEX_METAL  = '/textures/ethereal_metallic.png';
+
+/* BoxGeometry material indices:
+   0:+X 1:-X 2:+Y 3:-Y 4:+Z(front) 5:-Z(back) */
 const sections = [
-  { id: 'music',  name: "FREQUENCIES",  materialProps: { color: "#C0C0C0", metalness: 1.0, roughness: 0.1, emissive: "#E0E0E0" }, targetPos: [4, 0, 0] },
-  { id: 'art',    name: "DISRUPTIONS",  materialProps: { color: "#B8B8B8", metalness: 1.0, roughness: 0.05, emissive: "#D3D3D3" }, targetPos: [-4, 0, 0] },
-  { id: 'about',  name: "HAIL THE VOID", materialProps: { color: "#D3D3D3", metalness: 1.0, roughness: 0.1, emissive: "#F0F0F0" }, targetPos: [0, 4, 0] },
-  { id: 'submit', name: "SHADOWS",      materialProps: { color: "#A9A9A9", metalness: 1.0, roughness: 0.15, emissive: "#C0C0C0" }, targetPos: [0, -4, 0] },
-  { id: 'contact',name: "COLLAPSE",     materialProps: { color: "#BEBEBE", metalness: 1.0, roughness: 0.08, emissive: "#D8D8D8" }, targetPos: [0, 0, 4] }, // +Z = front
-  { id: 'video',  name: "Video Streams",materialProps: { color: "#E0E0E0", metalness: 1.0, roughness: 0.05, emissive: "#F5F5F5" }, targetPos: [0, 0, -4], disabled: false }
+  { id: 'music',   name: "FREQUENCIES",  materialProps: { color: "#C0C0C0", metalness: 1.0, roughness: 0.1,  emissive: "#E0E0E0" }, targetPos: [ 4,  0,  0] },
+  { id: 'art',     name: "DISRUPTIONS",  materialProps: { color: "#B8B8B8", metalness: 1.0, roughness: 0.05, emissive: "#D3D3D3" }, targetPos: [-4,  0,  0] },
+  { id: 'contact', name: "COLLAPSE",     materialProps: { color: "#BEBEBE", metalness: 1.0, roughness: 0.08, emissive: "#D8D8D8" }, targetPos: [ 0,  4,  0] },
+  { id: 'submit',  name: "SHADOWS",      materialProps: { color: "#A9A9A9", metalness: 1.0, roughness: 0.15, emissive: "#C0C0C0" }, targetPos: [ 0, -4,  0] },
+  { id: 'about',   name: "HAIL THE VOID",materialProps: { color: "#D3D3D3", metalness: 1.0, roughness: 0.10, emissive: "#F0F0F0" }, targetPos: [ 0,  0,  4] }, // FRONT
+  { id: 'video',   name: "Video Streams",materialProps: { color: "#E0E0E0", metalness: 1.0, roughness: 0.05, emissive: "#F5F5F5" }, targetPos: [ 0,  0, -4], disabled: false }
 ];
 
-/* ---------------------------- device detection ---------------------------- */
+/* ============================== UTIL: scripts ============================= */
+function useScript(src, attrs = {}, enabled = true) {
+  useEffect(() => {
+    if (!enabled) return;
+    // if script already exists, reuse
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) return;
+    const s = document.createElement('script');
+    s.src = src;
+    Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
+    s.async = true;
+    document.body.appendChild(s);
+    return () => { /* keep SDKs cached */ };
+  }, [src, enabled, JSON.stringify(attrs)]);
+}
+
+/* ============================== ERROR BOUNDARY ============================ */
+class ErrorBoundary extends React.Component {
+  constructor(props){ super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError(){ return { hasError: true }; }
+  componentDidCatch(err, info){ console.error('[ErrorBoundary]', err, info); }
+  render(){ return this.state.hasError ? null : this.props.children; }
+}
+
+/* ============================= DEVICE DETECTION =========================== */
 function useDeviceDetection() {
   const [device, setDevice] = useState({ isMobile: false, isTablet: false, isTouch: false });
   useEffect(() => {
@@ -37,7 +78,7 @@ function useDeviceDetection() {
   return device;
 }
 
-/* ------------------------------ auto preview ------------------------------ */
+/* ================================ AUTO PREVIEW ============================ */
 function useAutoPreview() {
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -68,7 +109,6 @@ function useAutoPreview() {
         window.location.href = previewUrl;
       }, TOTAL_TIME);
     }
-
     function startCountdown() {
       countdownRef.current = setInterval(() => {
         setTimeLeft(prev => {
@@ -80,7 +120,6 @@ function useAutoPreview() {
         });
       }, 1000);
     }
-
     schedulePreview();
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -92,14 +131,12 @@ function useAutoPreview() {
   return { showWarning, timeLeft };
 }
 
-/* -------------------------- fx: metallic trail/ripples -------------------------- */
+/* =================================== FX =================================== */
 function MetallicTrail({ position, opacity, scale, delay }) {
-  const meshRef = useRef();
-  const time = useRef(delay);
+  const meshRef = useRef(); const time = useRef(delay);
   useFrame((_, delta) => {
     if (meshRef.current) {
-      time.current += delta;
-      const t = time.current;
+      time.current += delta; const t = time.current;
       meshRef.current.position.x = position[0] + Math.sin(t * 0.5) * 0.5;
       meshRef.current.position.y = position[1] + Math.cos(t * 0.7) * 0.3;
       meshRef.current.position.z = position[2] + Math.sin(t * 0.3) * 0.4;
@@ -111,28 +148,20 @@ function MetallicTrail({ position, opacity, scale, delay }) {
   return (
     <mesh ref={meshRef} position={position}>
       <sphereGeometry args={[0.3, 16, 16]} />
-      <meshPhysicalMaterial
-        color="#C0C0C0" metalness={1.0} roughness={0.1}
-        transparent opacity={opacity}
-        emissive="#E0E0E0" emissiveIntensity={0.3}
-      />
+      <meshPhysicalMaterial color="#C0C0C0" metalness={1.0} roughness={0.1} transparent opacity={opacity} emissive="#E0E0E0" emissiveIntensity={0.3} />
     </mesh>
   );
 }
-
 function MetallicRipple({ origin, scale, opacity }) {
   const meshRef = useRef(); const time = useRef(0);
   useFrame((_, delta) => {
     if (meshRef.current) {
-      time.current += delta;
-      const t = time.current;
+      time.current += delta; const t = time.current;
       meshRef.current.scale.setScalar(scale * (1 + t * 3));
       meshRef.current.material.opacity = opacity * Math.max(0, 1 - t);
       meshRef.current.rotation.z = t * 2;
       const positions = meshRef.current.geometry.attributes.position.array;
-      for (let i = 0; i < positions.length; i += 3) {
-        positions[i + 2] = Math.sin(positions[i] * 10 + t * 5) * 0.1;
-      }
+      for (let i = 0; i < positions.length; i += 3) positions[i + 2] = Math.sin(positions[i] * 10 + t * 5) * 0.1;
       meshRef.current.geometry.attributes.position.needsUpdate = true;
     }
   });
@@ -143,7 +172,6 @@ function MetallicRipple({ origin, scale, opacity }) {
     </mesh>
   );
 }
-
 function MetallicTear({ startPos, endPos, progress }) {
   const meshRef = useRef();
   useFrame(() => {
@@ -159,11 +187,11 @@ function MetallicTear({ startPos, endPos, progress }) {
       );
       const points = curve.getPoints(50);
       const positions = new Float32Array(points.length * 3);
-      points.forEach((point, i) => {
+      points.forEach((p, i) => {
         if (i / points.length < progress) {
-          positions[i * 3] = point.x + (Math.random() - 0.5) * 0.1;
-          positions[i * 3 + 1] = point.y + (Math.random() - 0.5) * 0.1;
-          positions[i * 3 + 2] = point.z + (Math.random() - 0.5) * 0.1;
+          positions[i * 3] = p.x + (Math.random() - 0.5) * 0.1;
+          positions[i * 3 + 1] = p.y + (Math.random() - 0.5) * 0.1;
+          positions[i * 3 + 2] = p.z + (Math.random() - 0.5) * 0.1;
         }
       });
       meshRef.current.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -177,20 +205,38 @@ function MetallicTear({ startPos, endPos, progress }) {
   );
 }
 
-/* ------------------------------ morphing cube ------------------------------ */
-function MorphingCube({ onFaceClick, visible, morphProgress = 0, targetSection }) {
+/* =============================== PBR TEXTURES ============================= */
+function useEtherealTextures() {
+  const [baseMap, normalMap, roughnessMap, metallicMap] = useTexture([TEX_BASE, TEX_NORMAL, TEX_ROUGH, TEX_METAL]);
+  baseMap.colorSpace = THREE.SRGBColorSpace;
+  normalMap.colorSpace = THREE.NoColorSpace;
+  roughnessMap.colorSpace = THREE.NoColorSpace;
+  metallicMap.colorSpace = THREE.NoColorSpace;
+
+  baseMap.wrapS = baseMap.wrapT = THREE.RepeatWrapping;
+  normalMap.wrapS = normalMap.wrapT = THREE.RepeatWrapping;
+  roughnessMap.wrapS = roughnessMap.wrapT = THREE.RepeatWrapping;
+  metallicMap.wrapS = metallicMap.wrapT = THREE.RepeatWrapping;
+
+  return { baseMap, normalMap, roughnessMap, metallicMap };
+}
+
+/* =============================== MORPHING CUBE ============================ */
+function MorphingCube({ onFaceClick, visible, morphProgress = 0 }) {
   const meshRef = useRef();
-  const [iceNormalMap, iceRoughnessMap] = useTexture(['/textures/ice_normal.jpg', '/textures/ice_roughness.jpg']);
+  const { baseMap, normalMap, roughnessMap, metallicMap } = useEtherealTextures();
 
   const materials = useMemo(() => {
     return sections.map(section => {
       const props = section.materialProps;
       return new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(props.color),
-        metalness: props.metalness,
-        roughness: props.roughness,
-        normalMap: iceNormalMap,
-        roughnessMap: iceRoughnessMap,
+        map: baseMap,
+        normalMap,
+        roughnessMap,
+        metalnessMap: metallicMap,
+        metalness: 1.0,
+        roughness: 1.0,
         normalScale: new THREE.Vector2(1, 1),
         transparent: true,
         transmission: 0.5,
@@ -198,12 +244,12 @@ function MorphingCube({ onFaceClick, visible, morphProgress = 0, targetSection }
         ior: 1.5,
         thickness: 0.8,
         emissive: new THREE.Color(props.emissive),
-        emissiveIntensity: 0.4,
+        emissiveIntensity: 0.35,
         clearcoat: 1.0,
         clearcoatRoughness: 0.05
       });
     });
-  }, [iceNormalMap, iceRoughnessMap]);
+  }, [baseMap, normalMap, roughnessMap, metallicMap]);
 
   useFrame((state) => {
     if (meshRef.current && morphProgress > 0) {
@@ -213,11 +259,11 @@ function MorphingCube({ onFaceClick, visible, morphProgress = 0, targetSection }
       const positions = positionAttribute.array;
       for (let i = 0; i < positions.length; i += 3) {
         const x = positions[i], y = positions[i + 1], z = positions[i + 2];
-        const distortion = morphProgress * 0.3;
+        const d = morphProgress * 0.3;
         const noise = Math.sin(x * 3 + t) * Math.cos(y * 3 + t) * Math.sin(z * 3 + t);
-        positions[i]     = x * (1 - morphProgress * 0.2) + noise * distortion;
-        positions[i + 1] = y * (1 - morphProgress * 0.2) + noise * distortion * 0.8;
-        positions[i + 2] = z * (1 - morphProgress * 0.2) + noise * distortion * 0.6;
+        positions[i]     = x * (1 - morphProgress * 0.2) + noise * d;
+        positions[i + 1] = y * (1 - morphProgress * 0.2) + noise * d * 0.8;
+        positions[i + 2] = z * (1 - morphProgress * 0.2) + noise * d * 0.6;
       }
       positionAttribute.needsUpdate = true;
       const scale = 1 + morphProgress * 0.5;
@@ -228,10 +274,10 @@ function MorphingCube({ onFaceClick, visible, morphProgress = 0, targetSection }
     }
   });
 
-  const handleClick = (event) => {
+  const handleClick = (e) => {
     if (!visible || morphProgress > 0) return;
-    event.stopPropagation();
-    const materialIndex = event.face?.materialIndex;
+    e.stopPropagation();
+    const materialIndex = e.face?.materialIndex;
     if (materialIndex !== undefined) {
       const section = sections[materialIndex];
       if (section && !section.disabled) onFaceClick(section);
@@ -245,70 +291,54 @@ function MorphingCube({ onFaceClick, visible, morphProgress = 0, targetSection }
   );
 }
 
-/* -------------------------- GLB overlay (face shell) -------------------------- */
-/** Put your file at: public/models/faceShell.glb */
+/* ============================= FACE GLB OVERLAY =========================== */
 function FaceShellOverlay() {
-  const { scene } = useGLTF('/models/faceShell.glb');
+  const { scene } = useGLTF(FACE_SHELL_PATH);
+  const { baseMap, normalMap, roughnessMap, metallicMap } = useEtherealTextures();
 
   useEffect(() => {
-    // center + fit to the 2x2x2 cube, then nudge slightly forward (+Z)
+    if (!scene) return;
     const box = new THREE.Box3().setFromObject(scene);
     const size = new THREE.Vector3(); box.getSize(size);
     const center = new THREE.Vector3(); box.getCenter(center);
     scene.position.sub(center);
-    const targetWidth = 1.96; // just inside the cube edges
+    const targetWidth = 1.96;
     const s = targetWidth / Math.max(size.x, size.y);
     scene.scale.setScalar(s);
-    scene.position.z = 1.01;  // cube half-depth = 1, go a hair in front
+    scene.position.z = 1.01; // sit just in front of +Z face
 
     scene.traverse(o => {
       if (o.isMesh) {
         o.castShadow = o.receiveShadow = false;
-        // icy/metallic transmission, no z-write to avoid z-fighting with cube
+        o.renderOrder = 2;
         o.material = new THREE.MeshPhysicalMaterial({
+          map: baseMap,
+          normalMap,
+          roughnessMap,
+          metalnessMap: metallicMap,
+          metalness: 1.0,
+          roughness: 1.0,
+          normalScale: new THREE.Vector2(1, 1),
           color: '#e9eef3',
-          metalness: 0.2,
-          roughness: 0.15,
-          transmission: 1,
-          thickness: 0.55,
+          transmission: 0.5,
+          thickness: 0.7,
           ior: 1.45,
           attenuationColor: '#a8b6c3',
           attenuationDistance: 1.1,
           envMapIntensity: 1.0,
-          depthWrite: false
+          depthWrite: false,
+          depthTest: true
         });
       }
     });
-  }, [scene]);
+    console.log('[FaceShellOverlay] GLB loaded + PBR matched');
+  }, [scene, baseMap, normalMap, roughnessMap, metallicMap]);
 
   return <primitive object={scene} />;
 }
-// (optional) preload
-useGLTF.preload('/models/faceShell.glb');
+useGLTF.preload(FACE_SHELL_PATH);
 
-/* --------------------------------- fragments -------------------------------- */
-function Fragment({ position, velocity, scale, color }) {
-  const meshRef = useRef();
-  const vel = useRef([...velocity]);
-  useFrame((_, delta) => {
-    if (meshRef.current) {
-      meshRef.current.position.x += vel.current[0] * delta;
-      meshRef.current.position.y += vel.current[1] * delta;
-      meshRef.current.position.z += vel.current[2] * delta;
-      vel.current[0] *= 0.98; vel.current[1] *= 0.98; vel.current[2] *= 0.98;
-      meshRef.current.rotation.x += delta; meshRef.current.rotation.y += delta * 1.5;
-      meshRef.current.scale.multiplyScalar(0.98);
-    }
-  });
-  return (
-    <mesh ref={meshRef} position={position} scale={scale}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshBasicMaterial color={color || "#C0C0C0"} />
-    </mesh>
-  );
-}
-
-/* ------------------------------ camera controller ------------------------------ */
+/* =========================== CAMERA CONTROLLER ============================ */
 function CameraController({ darkMatterProgress, targetPos }) {
   const { camera } = useThree();
   useFrame(() => {
@@ -325,12 +355,124 @@ function CameraController({ darkMatterProgress, targetPos }) {
   return null;
 }
 
-/* ---------------------------------- scene root ---------------------------------- */
+/* ============================== ABOUT OVERLAY ============================= */
+function AboutOverlay({ open, onClose }) {
+  const containerRef = useRef(null);
+  const readyRef = useRef(false);
+  const closeTimeoutRef = useRef(null);
+
+  // Load provider SDK
+  useScript('https://www.youtube.com/iframe_api', {}, open && ABOUT_PROVIDER === 'youtube');
+  useScript('https://player.vimeo.com/api/player.js', {}, open && ABOUT_PROVIDER === 'vimeo');
+
+  // Build embed URL
+  const embedUrl = useMemo(() => {
+    if (ABOUT_PROVIDER === 'youtube') {
+      // autoplay muted, controls visible, related off, inline
+      return `https://www.youtube.com/embed/${ABOUT_VIDEO_ID}?autoplay=1&mute=1&controls=1&rel=0&playsinline=1&enablejsapi=1`;
+    } else {
+      // autoplay muted, minimal chrome, inline
+      return `https://player.vimeo.com/video/${ABOUT_VIDEO_ID}?autoplay=1&muted=1&title=0&byline=0&portrait=0&playsinline=1&app_id=122963`;
+    }
+  }, []);
+
+  // init player + end listener
+  useEffect(() => {
+    if (!open) return;
+
+    // fallback autoclose after 90s
+    closeTimeoutRef.current = setTimeout(() => onClose(), 90000);
+
+    if (ABOUT_PROVIDER === 'youtube') {
+      window.onYouTubeIframeAPIReady = () => { /* noop; we create player directly */ };
+      const checkYT = () => (window.YT && window.YT.Player);
+      const startYT = () => {
+        if (!containerRef.current) return;
+        // clear container
+        containerRef.current.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.src = embedUrl;
+        iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+        iframe.style.border = 'none';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.setAttribute('allowfullscreen', '1');
+        iframe.id = 'about-youtube-iframe';
+        containerRef.current.appendChild(iframe);
+
+        // Build YT Player to get ended event
+        const player = new window.YT.Player(iframe, {
+          events: {
+            onReady: () => { readyRef.current = true; },
+            onStateChange: (e) => {
+              // 0 == ended
+              if (e.data === window.YT.PlayerState.ENDED) onClose();
+            }
+          }
+        });
+      };
+      const wait = setInterval(() => {
+        if (checkYT()) { clearInterval(wait); startYT(); }
+      }, 50);
+      return () => clearInterval(wait);
+    }
+
+    if (ABOUT_PROVIDER === 'vimeo') {
+      const startVimeo = () => {
+        if (!containerRef.current || !window.Vimeo) return;
+        containerRef.current.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.src = embedUrl;
+        iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+        iframe.style.border = 'none';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.setAttribute('allowfullscreen', '1');
+        containerRef.current.appendChild(iframe);
+
+        const player = new window.Vimeo.Player(iframe);
+        player.on('loaded', () => { readyRef.current = true; });
+        player.on('ended', () => onClose());
+      };
+      const wait = setInterval(() => {
+        if (window.Vimeo && window.Vimeo.Player) { clearInterval(wait); startVimeo(); }
+      }, 50);
+      return () => clearInterval(wait);
+    }
+  }, [open, embedUrl, onClose]);
+
+  useEffect(() => () => { if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current); }, []);
+
+  if (!open) return null;
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: '#fff',
+      display: 'grid', placeItems: 'center', zIndex: 100000,
+      animation: 'fadein 250ms ease-out'
+    }}>
+      <div
+        ref={containerRef}
+        style={{ width: '92vw', height: '52vw', maxWidth: 1280, maxHeight: 720, background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.12)' }}
+      />
+      <button
+        onClick={onClose}
+        style={{ position: 'fixed', top: 20, right: 20, padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc', background: '#fff' }}
+        aria-label="Close"
+      >
+        ✕
+      </button>
+      <style>{`@keyframes fadein { from { opacity: 0 } to { opacity: 1 } }`}</style>
+    </div>
+  );
+}
+
+/* ================================== SCENE ================================= */
 export default function Scene() {
   const { isMobile, isTablet, isTouch } = useDeviceDetection();
   const { showWarning, timeLeft } = useAutoPreview();
 
   const [cubeVisible, setCubeVisible] = useState(true);
+  const [cubeKey, setCubeKey] = useState(0);
   const [morphProgress, setMorphProgress] = useState(0);
   const [fragments, setFragments] = useState([]);
   const [darkMatterVisible, setDarkMatterVisible] = useState(false);
@@ -341,6 +483,9 @@ export default function Scene() {
   const [binauralPaused, setBinauralPaused] = useState(false);
   const [voidRipples, setVoidRipples] = useState([]);
   const [realityTears, setRealityTears] = useState([]);
+  const [aboutOpen, setAboutOpen] = useState(false);
+
+  const aboutClose = useCallback(() => setAboutOpen(false), []);
   const binauralAudioRef = useRef(null);
 
   const performanceSettings = useMemo(() => ({
@@ -357,31 +502,41 @@ export default function Scene() {
   }), [isMobile]);
 
   useEffect(() => {
-    const binauralAudio = binauralAudioRef.current;
-    if (binauralAudio && performanceSettings.enableBinaural) {
-      binauralAudio.play().catch(() => {});
-    }
-    return () => { if (binauralAudio) binauralAudio.pause(); };
+    const a = binauralAudioRef.current;
+    if (a && performanceSettings.enableBinaural) a.play().catch(() => {});
+    return () => { if (a) a.pause(); };
   }, [performanceSettings.enableBinaural]);
 
   useEffect(() => {
-    if (binauralAudioRef.current && performanceSettings.enableBinaural) {
-      if (mediaIsPlaying || binauralPaused) {
-        binauralAudioRef.current.pause();
-      } else {
-        if (menuVisible || (!darkMatterVisible && !menuVisible)) {
-          binauralAudioRef.current.play().catch(() => {});
-        }
-      }
-    }
-  }, [mediaIsPlaying, menuVisible, darkMatterVisible, performanceSettings.enableBinaural, binauralPaused]);
+    const a = binauralAudioRef.current;
+    if (!a) return;
+    if (mediaIsPlaying || binauralPaused || aboutOpen) a.pause();
+    else if (performanceSettings.enableBinaural) a.play().catch(() => {});
+  }, [mediaIsPlaying, menuVisible, darkMatterVisible, performanceSettings.enableBinaural, binauralPaused, aboutOpen]);
+
+  const startAboutOverlay = useCallback(() => {
+    setAboutOpen(true);
+    setBinauralPaused(true);
+    setMenuVisible(false);
+    setDarkMatterVisible(false);
+    setActiveSection(null);
+    setMorphProgress(0);
+    setCubeVisible(true);
+  }, []);
 
   const handleCubeClick = useCallback((section) => {
     if (!cubeVisible || section.disabled || morphProgress > 0) return;
+
+    if (section.id === 'about') { // front face → video overlay
+      startAboutOverlay();
+      return;
+    }
+
     if (section.id === 'video' || section.id === 'music') {
       setBinauralPaused(true);
       if (binauralAudioRef.current) binauralAudioRef.current.pause();
     }
+
     setActiveSection(section);
 
     const morphAnimate = () => {
@@ -440,9 +595,10 @@ export default function Scene() {
     setRealityTears(tears);
     morphAnimate();
     setTimeout(() => setFragments([]), 2000);
-  }, [cubeVisible, morphProgress, performanceSettings.maxFragments, performanceSettings.maxRipples]);
+  }, [cubeVisible, morphProgress, performanceSettings.maxFragments, performanceSettings.maxRipples, startAboutOverlay]);
 
   const handleReset = useCallback(() => {
+    setCubeKey(k => k + 1); // hard remount cube (cleans morph artifacts)
     setMenuVisible(false);
     setMediaIsPlaying(false);
     setBinauralPaused(false);
@@ -454,10 +610,11 @@ export default function Scene() {
     setMorphProgress(0);
     setCubeVisible(true);
     setDarkMatterProgress(0);
-    if (binauralAudioRef.current && performanceSettings.enableBinaural) {
+    setAboutOpen(false);
+    if (binauralAudioRef.current && !isMobile) {
       binauralAudioRef.current.play().catch(() => {});
     }
-  }, [performanceSettings.enableBinaural]);
+  }, [isMobile]);
 
   const handleMediaPlayingChange = useCallback((isPlaying) => setMediaIsPlaying(isPlaying), []);
 
@@ -493,109 +650,111 @@ export default function Scene() {
         <directionalLight position={[5, 10, 7.5]} intensity={1.2} color="#FFFACD" />
         <directionalLight position={[-5, -5, -5]} intensity={0.8} color="#F5DEB3" />
 
-        {/* UI cube */}
-        <MorphingCube
-          onFaceClick={handleCubeClick}
-          visible={cubeVisible}
-          morphProgress={morphProgress}
-          targetSection={activeSection}
-        />
+        <Suspense fallback={null}>
+          <MorphingCube
+            key={cubeKey}
+            onFaceClick={handleCubeClick}
+            visible={cubeVisible}
+            morphProgress={morphProgress}
+          />
 
-        {/* GLB overlay (only when cube is present, to avoid morph conflicts) */}
-        {cubeVisible && morphProgress === 0 && <FaceShellOverlay />}
+          {cubeVisible && morphProgress === 0 && (
+            <ErrorBoundary>
+              <FaceShellOverlay />
+            </ErrorBoundary>
+          )}
 
-        {fragments.map(frag => <Fragment key={frag.id} {...frag} />)}
+          {darkMatterVisible && activeSection && (
+            <>
+              <group position={[
+                darkMatterProgress * activeSection.targetPos[0],
+                darkMatterProgress * activeSection.targetPos[1],
+                darkMatterProgress * activeSection.targetPos[2]
+              ]}>
+                <QuantumVisualization
+                  position={[0, 0, 0]}
+                  scale={1.2 - darkMatterProgress * 0.4}
+                  opacity={1 - darkMatterProgress}
+                  flowDirection={new THREE.Vector3(...activeSection.targetPos).normalize()}
+                  isFlowing={true}
+                  flowProgress={darkMatterProgress}
+                />
+              </group>
 
-        {darkMatterVisible && activeSection && (
-          <>
-            <group position={[
-              darkMatterProgress * activeSection.targetPos[0],
-              darkMatterProgress * activeSection.targetPos[1],
-              darkMatterProgress * activeSection.targetPos[2]
-            ]}>
-              <QuantumVisualization
-                position={[0, 0, 0]}
-                scale={1.2 - darkMatterProgress * 0.4}
-                opacity={1 - darkMatterProgress}
-                flowDirection={new THREE.Vector3(...activeSection.targetPos).normalize()}
-                isFlowing={true}
-                flowProgress={darkMatterProgress}
-              />
-            </group>
+              {[...Array((isMobile ? 2 : 5))].map((_, i) => (
+                <MetallicTrail
+                  key={i}
+                  position={[
+                    darkMatterProgress * activeSection.targetPos[0] * (0.7 - i * 0.1),
+                    darkMatterProgress * activeSection.targetPos[1] * (0.7 - i * 0.1),
+                    darkMatterProgress * activeSection.targetPos[2] * (0.7 - i * 0.1)
+                  ]}
+                  opacity={0.3 - i * 0.05}
+                  scale={0.5 - i * 0.08}
+                  delay={i * 0.3}
+                />
+              ))}
+            </>
+          )}
 
-            {[...Array(performanceSettings.maxTrails)].map((_, i) => (
-              <MetallicTrail
-                key={i}
-                position={[
-                  darkMatterProgress * activeSection.targetPos[0] * (0.7 - i * 0.1),
-                  darkMatterProgress * activeSection.targetPos[1] * (0.7 - i * 0.1),
-                  darkMatterProgress * activeSection.targetPos[2] * (0.7 - i * 0.1)
-                ]}
-                opacity={0.3 - i * 0.05}
-                scale={0.5 - i * 0.08}
-                delay={i * 0.3}
-              />
-            ))}
-          </>
-        )}
+          {voidRipples.map(r => (
+            <MetallicRipple key={r.id} origin={r.origin} scale={r.scale} opacity={r.opacity} />
+          ))}
 
-        {voidRipples.map(ripple => (
-          <MetallicRipple key={ripple.id} origin={ripple.origin} scale={ripple.scale} opacity={ripple.opacity} />
-        ))}
-
-        {realityTears.map(tear => (
-          <MetallicTear key={tear.id} startPos={tear.startPos} endPos={tear.endPos} progress={tear.progress} />
-        ))}
+          {realityTears.map(t => (
+            <MetallicTear key={t.id} startPos={t.startPos} endPos={t.endPos} progress={t.progress} />
+          ))}
+        </Suspense>
 
         {darkMatterVisible && activeSection && (
           <CameraController darkMatterProgress={darkMatterProgress} targetPos={activeSection.targetPos} />
         )}
         <OrbitControls
           enablePan={false}
-          enabled={!darkMatterVisible && morphProgress === 0}
+          enabled={!darkMatterVisible && morphProgress === 0 && !aboutOpen}
           enableDamping dampingFactor={0.05}
           maxDistance={isMobile ? 8 : 15}
           minDistance={isMobile ? 2 : 3}
         />
       </Canvas>
 
-      <SectionContent section={menuVisible ? activeSection : null} onReset={handleReset} onMediaPlayingChange={handleMediaPlayingChange} />
+      <SectionContent
+        section={menuVisible ? activeSection : null}
+        onReset={handleReset}
+        onMediaPlayingChange={handleMediaPlayingChange}
+      />
 
-      {/* binaural */}
-      {performanceSettings.enableBinaural && (
+      {(!isMobile) && (
         <audio ref={binauralAudioRef} loop preload="auto" src="/audio/binaural_loop.mp3" />
       )}
 
-      {/* preview warning */}
+      {/* About overlay (YouTube/Vimeo embed with SDK end detection) */}
+      <AboutOverlay open={aboutOpen} onClose={aboutClose} />
+
+      {/* Auto-preview warning */}
       {showWarning && (
         <div style={{
           position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
           background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
           border: '4px solid #808080', borderRadius: '12px', padding: '35px',
           textAlign: 'center', color: '#1A1A1A', fontFamily: 'monospace', fontSize: '18px', fontWeight: 'bold',
-          zIndex: 10000, boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -3px 8px rgba(0,0,0,0.2)',
+          zIndex: 10000, boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
           textShadow: '0 0 5px rgba(0,0,255,0.3)'
         }}>
-          <div style={{ marginBottom: '20px', color: '#2C2C2C', textShadow: '0 0 5px rgba(0,0,255,0.3)' }}>
-            ⚠ INITIATING VOID GLIMPSE ⚠
-          </div>
-          <div style={{ color: '#1A1A1A', textShadow: '0 0 5px rgba(0,0,255,0.3)' }}>
-            Dimensional breach in {timeLeft} seconds...
-          </div>
-          <div style={{ fontSize: '14px', marginTop: '15px', color: '#4A4A4A', fontStyle: 'italic', textShadow: '0 0 5px rgba(0,0,255,0.3)' }}>
-            Move to cancel
-          </div>
+          <div style={{ marginBottom: 10 }}>⚠ INITIATING VOID GLIMPSE ⚠</div>
+          <div>Dimensional breach in {timeLeft} seconds...</div>
+          <div style={{ fontSize: 14, marginTop: 12, opacity: 0.8 }}>Move to cancel</div>
         </div>
       )}
 
+      {/* Dev HUD */}
       {process.env.NODE_ENV === 'development' && (
         <div style={{
           position: 'fixed', top: 10, left: 10,
           background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
           border: '2px solid #808080', borderRadius: '8px', padding: '10px',
           color: '#2C2C2C', fontFamily: 'monospace', fontSize: '12px', fontWeight: 'bold',
-          zIndex: 9999, boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
-          textShadow: '0 0 5px rgba(0,0,255,0.3)'
+          zIndex: 9999, boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
         }}>
           Device: {isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'} | Touch: {isTouch ? 'Yes' : 'No'}
         </div>
