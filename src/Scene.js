@@ -297,21 +297,9 @@ function MorphingCube({ onFaceClick, visible, morphProgress = 0 }) {
 /* ============================= FACE GLB OVERLAY =========================== */
 function FaceShellOverlay() {
   const { scene } = useGLTF(FACE_SHELL_PATH);
-  const faceTextures = useTexture({
-    map: '/textures/ethereal_base.png',
-    normalMap: '/textures/ethereal_normal.png', 
-    roughnessMap: '/textures/ethereal_roughness.png',
-    metalnessMap: '/textures/ethereal_metallic.png'
-  });
 
   useEffect(() => {
-    if (!scene || !faceTextures.map) return;
-    
-    // Set color spaces
-    faceTextures.map.colorSpace = THREE.SRGBColorSpace;
-    faceTextures.normalMap.colorSpace = THREE.NoColorSpace;
-    faceTextures.roughnessMap.colorSpace = THREE.NoColorSpace;
-    faceTextures.metalnessMap.colorSpace = THREE.NoColorSpace;
+    if (!scene) return;
     
     const box = new THREE.Box3().setFromObject(scene);
     const size = new THREE.Vector3(); box.getSize(size);
@@ -327,26 +315,24 @@ function FaceShellOverlay() {
         o.castShadow = o.receiveShadow = false;
         o.renderOrder = 2;
         o.material = new THREE.MeshPhysicalMaterial({
-          ...faceTextures,
-          color: new THREE.Color("#D3D3D3"),
-          metalness: 1.0,
-          roughness: 0.10,
-          normalScale: new THREE.Vector2(1, 1),
+          color: '#F8F8FF',      // Ghost white
+          metalness: 0.1,        // Barely metallic
+          roughness: 0.3,        // Soft surface
           transparent: true,
-          transmission: 0.5,
-          opacity: 1,
-          ior: 1.5,
-          thickness: 0.8,
-          emissive: new THREE.Color("#F0F0F0"),
-          emissiveIntensity: 0.35,
-          clearcoat: 1.0,
-          clearcoatRoughness: 0.05,
+          transmission: 0.15,    // Slight translucency
+          opacity: 0.95,
+          ior: 1.4,
+          thickness: 0.5,
+          emissive: '#F0F8FF',   // Very subtle blue-white glow
+          emissiveIntensity: 0.1,
+          clearcoat: 0.8,
+          clearcoatRoughness: 0.2,
           depthWrite: false,
           depthTest: true
         });
       }
     });
-  }, [scene, faceTextures]);
+  }, [scene]);
 
   return <primitive object={scene} />;
 }
@@ -645,10 +631,11 @@ export default function Scene() {
           touchAction: 'none'
         }}
       >
-        <ambientLight intensity={0.6} color="#F0E68C" />
-        <directionalLight position={[5, 10, 7.5]} intensity={1.2} color="#FFFACD" />
-        <directionalLight position={[-5, -5, -5]} intensity={0.8} color="#F5DEB3" />
-        <directionalLight position={[0, 0, 10]} intensity={0.3} color="#87CEEB" />
+       <ambientLight intensity={0.4} color="#F0F8FF" />
+<directionalLight position={[10, 15, 10]} intensity={1.5} color="#FFFFFF" castShadow />
+<directionalLight position={[-8, 8, -5]} intensity={0.8} color="#E6F3FF" />
+<directionalLight position={[0, -5, 8]} intensity={0.6} color="#F0F0FF" />
+<pointLight position={[0, 0, 5]} intensity={0.4} color="#FAFAFF" />
 
         <Suspense fallback={null}>
           <MorphingCube
