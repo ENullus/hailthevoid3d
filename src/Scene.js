@@ -311,11 +311,32 @@ function FaceShellOverlay() {
     scene.position.z = 1.01; // sit just in front of +Z face
 
     scene.traverse(o => {
-      if (o.isMesh) {
-        o.castShadow = o.receiveShadow = false;
-        o.renderOrder = 2;
-      }
+  if (o.isMesh) {
+    o.castShadow = o.receiveShadow = false;
+    o.renderOrder = 2;
+    o.material = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color("#D3D3D3"),
+      map: baseMap,
+      normalMap,
+      roughnessMap,
+      metalnessMap: metallicMap,
+      metalness: 1.0,
+      roughness: 0.10,
+      normalScale: new THREE.Vector2(1, 1),
+      transparent: true,
+      transmission: 0.5,
+      opacity: 1,
+      ior: 1.5,
+      thickness: 0.8,
+      emissive: new THREE.Color("#F0F0F0"),
+      emissiveIntensity: 0.35,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.05,
+      depthWrite: false,
+      depthTest: true
     });
+  }
+});
     console.log('[FaceShellOverlay] GLB loaded + PBR matched');
   }, [scene, baseMap, normalMap, roughnessMap, metallicMap]);
 
