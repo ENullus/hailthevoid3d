@@ -414,7 +414,7 @@ function AboutOverlay({ open, onClose }) {
 }
 
 /* ================================== SCENE ================================= */
-const DREAM_MACHINE_URL = 'https://dream-machine.onrender.com';
+const DREAM_MACHINE_URL = 'https://dream-machine-bkrw.onrender.com';
 
 export default function Scene() {
   const { isMobile, isTablet, isTouch } = useDeviceDetection();
