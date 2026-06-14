@@ -26,24 +26,6 @@ const sections = [
   { id: 'video',   name: "Video Streams",materialProps: { color: "#E0E0E0", metalness: 1.0, roughness: 0.05, emissive: "#F5F5F5" }, targetPos: [ 0,  0, -4], disabled: false }
 ];
 
-/* ============================== UTIL: scripts ============================= */
-function useScript(src, attrs = {}, enabled = true) {
-  // Extract attrs keys to a stable dependency
-  const attrsKeys = useMemo(() => Object.keys(attrs).sort().join(','), [attrs]);
-  
-  useEffect(() => {
-    if (!enabled) return;
-    // if script already exists, reuse
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing) return;
-    const s = document.createElement('script');
-    s.src = src;
-    Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
-    s.async = true;
-    document.body.appendChild(s);
-    return () => { /* keep SDKs cached */ };
-  }, [src, enabled, attrsKeys, attrs]);
-}
 
 /* ============================== ERROR BOUNDARY ============================ */
 class ErrorBoundary extends React.Component {
