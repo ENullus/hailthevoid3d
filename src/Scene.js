@@ -81,59 +81,6 @@ function useDeviceDetection() {
   return device;
 }
 
-/* ================================ AUTO PREVIEW ============================ */
-function useAutoPreview() {
-  const [showWarning, setShowWarning] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const timerRef = useRef(null);
-  const warningTimerRef = useRef(null);
-  const countdownRef = useRef(null);
-
-  useEffect(() => {
-    const previewHappened = sessionStorage.getItem('voidPreviewShown');
-    if (previewHappened) return;
-
-    const TOTAL_TIME = 2 * 60 * 1000;
-    const WARNING_TIME = 10 * 1000;
-    const PREVIEW_DURATION = 30;
-    const STATIC_SITE_URL = 'https://hailthevoid.org';
-
-    function schedulePreview() {
-      warningTimerRef.current = setTimeout(() => {
-        setShowWarning(true);
-        setTimeLeft(10);
-        startCountdown();
-      }, TOTAL_TIME - WARNING_TIME);
-
-      timerRef.current = setTimeout(() => {
-        sessionStorage.setItem('voidPreviewShown', 'true');
-        const currentUrl = window.location.href.split('?')[0];
-        const previewUrl = `${STATIC_SITE_URL}?auto=true&duration=${PREVIEW_DURATION}&return=${encodeURIComponent(currentUrl)}`;
-        window.location.href = previewUrl;
-      }, TOTAL_TIME);
-    }
-    function startCountdown() {
-      countdownRef.current = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(countdownRef.current);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    schedulePreview();
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
-  }, []);
-
-  return { showWarning, timeLeft };
-}
-
 /* =================================== FX =================================== */
 function MetallicTrail({ position, opacity, scale, delay }) {
   const meshRef = useRef(); const time = useRef(delay);
@@ -467,9 +414,10 @@ function AboutOverlay({ open, onClose }) {
 }
 
 /* ================================== SCENE ================================= */
+const DREAM_MACHINE_URL = 'https://dream-machine.onrender.com';
+
 export default function Scene() {
   const { isMobile, isTablet, isTouch } = useDeviceDetection();
-  const { showWarning, timeLeft } = useAutoPreview();
 
   const [cubeVisible, setCubeVisible] = useState(true);
   const [cubeKey, setCubeKey] = useState(0);
@@ -718,21 +666,59 @@ export default function Scene() {
       {/* About overlay (YouTube/Vimeo embed with SDK end detection) */}
       <AboutOverlay open={aboutOpen} onClose={aboutClose} />
 
-      {/* Auto-preview warning */}
-      {showWarning && (
-        <div style={{
-          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
-          border: '4px solid #808080', borderRadius: '12px', padding: '35px',
-          textAlign: 'center', color: '#1A1A1A', fontFamily: 'monospace', fontSize: '18px', fontWeight: 'bold',
-          zIndex: 10000, boxShadow: '0 0 50px rgba(0,0,255,0.3), inset 0 3px 8px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)',
-          textShadow: '0 0 5px rgba(0,0,255,0.3)'
-        }}>
-          <div style={{ marginBottom: 10 }}>⚠ INITIATING VOID GLIMPSE ⚠</div>
-          <div>Dimensional breach in {timeLeft} seconds...</div>
-          <div style={{ fontSize: 14, marginTop: 12, opacity: 0.8 }}>Move to cancel</div>
-        </div>
-      )}
+      {/* Top-right link to hailthevoid.org */}
+      <a
+        href="https://hailthevoid.org"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          position: 'fixed', top: 18, right: 20,
+          fontFamily: 'monospace', fontSize: '0.75rem', letterSpacing: '0.12em',
+          color: '#555', textDecoration: 'none', zIndex: 9998,
+          padding: '5px 10px',
+          background: 'rgba(220,220,220,0.55)',
+          borderRadius: 4,
+          border: '1px solid rgba(100,100,100,0.25)',
+          backdropFilter: 'blur(4px)',
+          transition: 'color 0.2s, background 0.2s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.color = '#111'; e.currentTarget.style.background = 'rgba(200,200,200,0.8)'; }}
+        onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.background = 'rgba(220,220,220,0.55)'; }}
+      >
+        HAILTHEVOID.ORG
+      </a>
+
+      {/* Floating blue Dream Machine particle */}
+      <style>{`
+        @keyframes dmFloat {
+          0%, 100% { transform: translateY(0px); box-shadow: 0 0 10px 3px rgba(59,130,246,0.6), 0 0 22px 8px rgba(59,130,246,0.25); }
+          50%       { transform: translateY(-8px); box-shadow: 0 0 16px 5px rgba(96,165,250,0.8), 0 0 32px 12px rgba(59,130,246,0.35); }
+        }
+        .dm-particle:hover { transform: scale(1.35) !important; animation-play-state: paused !important; }
+        .dm-label {
+          position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+          font-family: monospace; font-size: 9px; letter-spacing: 0.1em;
+          color: rgba(59,130,246,0.9); white-space: nowrap; pointer-events: none;
+          opacity: 0; transition: opacity 0.2s;
+        }
+        .dm-wrap:hover .dm-label { opacity: 1; }
+      `}</style>
+      <div className="dm-wrap" style={{ position: 'fixed', bottom: 28, left: 28, zIndex: 9998 }}>
+        <a
+          href={DREAM_MACHINE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="dm-particle"
+          title="Dream Machine"
+          style={{
+            display: 'block', width: 14, height: 14, borderRadius: '50%',
+            background: 'radial-gradient(circle at 35% 35%, #93c5fd 0%, #3b82f6 55%, #1d4ed8 100%)',
+            animation: 'dmFloat 3.2s ease-in-out infinite',
+            cursor: 'pointer',
+          }}
+        />
+        <div className="dm-label">DREAM MACHINE</div>
+      </div>
 
       {/* Dev HUD */}
       {process.env.NODE_ENV === 'development' && (
