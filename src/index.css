@@ -5,6 +5,30 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Procedural greyscale: honeycomb (bio) + strata (stone) + weave (alloy) */
+  background-color: #0c0c0e;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='104'%3E%3Cpolygon points='30,2 58,17 58,47 30,62 2,47 2,17' fill='none' stroke='rgba(88,90,94,0.13)' stroke-width='1'/%3E%3Cpolygon points='30,62 58,77 58,107 30,122 2,107 2,77' fill='none' stroke='rgba(68,70,74,0.09)' stroke-width='0.5'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      160deg,
+      transparent 0px, transparent 21px,
+      rgba(62,64,68,0.07) 21px, rgba(62,64,68,0.07) 22px,
+      transparent 22px, transparent 46px,
+      rgba(46,48,52,0.05) 46px, rgba(46,48,52,0.05) 47px,
+      transparent 47px, transparent 74px,
+      rgba(70,72,76,0.04) 74px, rgba(70,72,76,0.04) 75px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0, transparent 5px,
+      rgba(78,80,85,0.05) 5px, rgba(78,80,85,0.05) 6px
+    ),
+    repeating-linear-gradient(
+      135deg,
+      transparent 0, transparent 5px,
+      rgba(62,64,68,0.04) 5px, rgba(62,64,68,0.04) 6px
+    ),
+    linear-gradient(170deg, #111113 0%, #0c0c0e 45%, #0f0f11 100%);
 }
 
 code {

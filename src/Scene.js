@@ -573,9 +573,10 @@ export default function Scene() {
     <>
       <Canvas
         camera={{ position: cameraSettings.position, fov: cameraSettings.fov }}
+        gl={{ alpha: true }}
         style={{
           position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh',
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          background: 'transparent',
           touchAction: 'none'
         }}
       >
@@ -674,16 +675,16 @@ export default function Scene() {
         style={{
           position: 'fixed', top: 18, right: 20,
           fontFamily: 'monospace', fontSize: '0.75rem', letterSpacing: '0.12em',
-          color: '#555', textDecoration: 'none', zIndex: 9998,
+          color: 'rgba(200,210,220,0.8)', textDecoration: 'none', zIndex: 9998,
           padding: '5px 10px',
-          background: 'rgba(220,220,220,0.55)',
+          background: 'rgba(0,0,0,0.45)',
           borderRadius: 4,
-          border: '1px solid rgba(100,100,100,0.25)',
-          backdropFilter: 'blur(4px)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          backdropFilter: 'blur(6px)',
           transition: 'color 0.2s, background 0.2s',
         }}
-        onMouseEnter={e => { e.currentTarget.style.color = '#111'; e.currentTarget.style.background = 'rgba(200,200,200,0.8)'; }}
-        onMouseLeave={e => { e.currentTarget.style.color = '#555'; e.currentTarget.style.background = 'rgba(220,220,220,0.55)'; }}
+        onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(0,0,0,0.65)'; }}
+        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(200,210,220,0.8)'; e.currentTarget.style.background = 'rgba(0,0,0,0.45)'; }}
       >
         HAILTHEVOID.ORG
       </a>
@@ -724,7 +725,7 @@ export default function Scene() {
       {process.env.NODE_ENV === 'development' && (
         <div style={{
           position: 'fixed', top: 10, left: 10,
-          background: 'linear-gradient(145deg, #E8E8E8 0%, #D0D0D0 30%, #C0C0C0 70%, #A8A8A8 100%)',
+          background: 'rgba(10,10,14,0.82)',
           border: '2px solid #808080', borderRadius: '8px', padding: '10px',
           color: '#2C2C2C', fontFamily: 'monospace', fontSize: '12px', fontWeight: 'bold',
           zIndex: 9999, boxShadow: '0 0 20px rgba(0,0,255,0.2), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.2)'
