@@ -8,11 +8,6 @@ import SectionContent from './SectionContent';
 import QuantumVisualization from './QuantumVisualization';
 
 /* =============================== CONFIG ================================== */
-// Choose your About video provider + ID
-// ABOUT_PROVIDER: 'youtube' | 'vimeo'
-const ABOUT_PROVIDER = 'youtube';           // <-- set 'vimeo' if using Vimeo
-const ABOUT_VIDEO_ID = 'jwr1EOvAxQI';     // <-- replace with your real ID
-
 // Asset paths
 const FACE_SHELL_PATH = '/models/faceShell.glb';
 const TEX_BASE   = '/textures/ethereal_base.png';
@@ -304,109 +299,49 @@ function CameraController({ darkMatterProgress, targetPos }) {
 
 /* ============================== ABOUT OVERLAY ============================= */
 function AboutOverlay({ open, onClose }) {
-  const containerRef = useRef(null);
-  const readyRef = useRef(false);
-  const closeTimeoutRef = useRef(null);
+  const videoRef = useRef(null);
 
-  // Load provider SDK
-  useScript('https://www.youtube.com/iframe_api', {}, open && ABOUT_PROVIDER === 'youtube');
-  useScript('https://player.vimeo.com/api/player.js', {}, open && ABOUT_PROVIDER === 'vimeo');
-
-  // Build embed URL
-  const embedUrl = useMemo(() => {
-    if (ABOUT_PROVIDER === 'youtube') {
-      // autoplay muted, controls visible, related off, inline
-      return `https://www.youtube.com/embed/${ABOUT_VIDEO_ID}?autoplay=1&mute=1&controls=1&rel=0&playsinline=1&enablejsapi=1`;
-    } else {
-      // autoplay muted, minimal chrome, inline
-      return `https://player.vimeo.com/video/${ABOUT_VIDEO_ID}?autoplay=1&muted=1&title=0&byline=0&portrait=0&playsinline=1&app_id=122963`;
-    }
-  }, []);
-
-  // init player + end listener
   useEffect(() => {
-    if (!open) return;
-
-    // fallback autoclose after 90s
-    closeTimeoutRef.current = setTimeout(() => onClose(), 90000);
-
-    if (ABOUT_PROVIDER === 'youtube') {
-      window.onYouTubeIframeAPIReady = () => { /* noop; we create player directly */ };
-      const checkYT = () => (window.YT && window.YT.Player);
-      const startYT = () => {
-        if (!containerRef.current) return;
-        // clear container
-        containerRef.current.innerHTML = '';
-        const iframe = document.createElement('iframe');
-        iframe.src = embedUrl;
-        iframe.allow = 'autoplay; fullscreen; picture-in-picture';
-        iframe.style.border = 'none';
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.setAttribute('allowfullscreen', '1');
-        iframe.id = 'about-youtube-iframe';
-        containerRef.current.appendChild(iframe);
-
-        // Build YT Player to get ended event
-        new window.YT.Player(iframe, {
-          events: {
-            onReady: () => { readyRef.current = true; },
-            onStateChange: (e) => {
-              // 0 == ended
-              if (e.data === window.YT.PlayerState.ENDED) onClose();
-            }
-          }
-        });
-      };
-      const wait = setInterval(() => {
-        if (checkYT()) { clearInterval(wait); startYT(); }
-      }, 50);
-      return () => clearInterval(wait);
+    if (open && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
     }
-
-    if (ABOUT_PROVIDER === 'vimeo') {
-      const startVimeo = () => {
-        if (!containerRef.current || !window.Vimeo) return;
-        containerRef.current.innerHTML = '';
-        const iframe = document.createElement('iframe');
-        iframe.src = embedUrl;
-        iframe.allow = 'autoplay; fullscreen; picture-in-picture';
-        iframe.style.border = 'none';
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.setAttribute('allowfullscreen', '1');
-        containerRef.current.appendChild(iframe);
-
-        const vimeoPlayer = new window.Vimeo.Player(iframe);
-        vimeoPlayer.on('loaded', () => { readyRef.current = true; });
-        vimeoPlayer.on('ended', () => onClose());
-      };
-      const wait = setInterval(() => {
-        if (window.Vimeo && window.Vimeo.Player) { clearInterval(wait); startVimeo(); }
-      }, 50);
-      return () => clearInterval(wait);
+    if (!open && videoRef.current) {
+      videoRef.current.pause();
     }
-  }, [open, embedUrl, onClose]);
-
-  useEffect(() => () => { if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current); }, []);
+  }, [open]);
 
   if (!open) return null;
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: '#fff',
-      display: 'grid', placeItems: 'center', zIndex: 100000,
-      animation: 'fadein 250ms ease-out'
+      position: 'fixed', inset: 0, background: '#000',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      zIndex: 100000, animation: 'fadein 250ms ease-out'
     }}>
-      <div
-        ref={containerRef}
-        style={{ width: '92vw', height: '52vw', maxWidth: 1280, maxHeight: 720, background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.12)' }}
+      <video
+        ref={videoRef}
+        src="/video/voidtalk.mp4"
+        playsInline
+        controls
+        onEnded={onClose}
+        style={{ maxWidth: '100%', maxHeight: 'calc(100vh - 64px)', outline: 'none' }}
       />
       <button
         onClick={onClose}
-        style={{ position: 'fixed', top: 20, right: 20, padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc', background: '#fff' }}
-        aria-label="Close"
+        style={{
+          marginTop: 16,
+          background: 'transparent',
+          border: '1px solid rgba(200,210,220,0.4)',
+          color: 'rgba(200,210,220,0.8)',
+          fontFamily: 'Courier New, monospace',
+          fontSize: '0.8rem', letterSpacing: '3px',
+          padding: '8px 24px', cursor: 'pointer',
+          transition: 'border-color 0.2s, color 0.2s'
+        }}
+        onMouseEnter={e => { e.target.style.borderColor = 'rgba(200,210,220,0.9)'; e.target.style.color = '#fff'; }}
+        onMouseLeave={e => { e.target.style.borderColor = 'rgba(200,210,220,0.4)'; e.target.style.color = 'rgba(200,210,220,0.8)'; }}
       >
-        ✕
+        ← RETURN TO VOID
       </button>
       <style>{`@keyframes fadein { from { opacity: 0 } to { opacity: 1 } }`}</style>
     </div>
